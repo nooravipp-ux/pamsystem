@@ -1,0 +1,1 @@
+export const BASE_URL = 'http://103.176.44.189/pamsystem-api/api';
