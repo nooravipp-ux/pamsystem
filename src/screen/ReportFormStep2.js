@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, TextInput,StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { SelectList } from 'react-native-dropdown-select-list';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { DataContext  } from '../context/DataContext';
 
 const ReportFormStep2 = ( {navigation} ) => {
-	const [judul, setJudul] = useState('');
-	const [deskripsi, setDeskripsi] = useState('');
-	const [kategori, setKategori] = useState('');
-	const [subKategori, setSubKategori] = useState('');
+	const { formData, updateFormData } = useContext(DataContext);
 
 	let data = [{
 		value: 'Sosial Budaya',
 	}]
+
+	const handleInputUraianKejadian = (value) => {
+		updateFormData({ desc: value });
+	};
+
+	const handleInputTindakan = (value) => {
+		updateFormData({ keterangan: value });
+	};
 
     return(
         <View style={styles.container}>
@@ -27,16 +31,16 @@ const ReportFormStep2 = ( {navigation} ) => {
 				<Text style={styles.inputLabel}>URAIAN KEJADIAN</Text>
 				<TextInput
 					style={styles.textArea}
-					value={deskripsi}
-					onChangeText={setDeskripsi}
+					value={formData.desc}
+					onChangeText={handleInputUraianKejadian}
 					multiline={true}
 					numberOfLines={4}
 				/>
 				<Text style={styles.inputLabel}>KETERANGAN / TINDAKAN</Text>
 				<TextInput
 					style={styles.textArea}
-					value={deskripsi}
-					onChangeText={setDeskripsi}
+					value={formData.keterangan}
+					onChangeText={handleInputTindakan}
 					multiline={true}
 					numberOfLines={4}
 				/>

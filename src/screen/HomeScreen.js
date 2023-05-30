@@ -1,7 +1,13 @@
-import React from 'react';
-import { View, Text, FlatList, Image, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Dimensions} from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
+import { View, Text, FlatList, Image, StyleSheet, SafeAreaView, TouchableOpacity} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AuthContext } from '../context/AuthContext';
 
 const HomeScreen = ({ navigation }) => {
+	const { userInfo } = useContext(AuthContext);
+
+	const user = JSON.parse(userInfo);
+	console.log(user)
 
 	return (
 		<View style={styles.container}>
@@ -16,12 +22,12 @@ const HomeScreen = ({ navigation }) => {
 				<View style={styles.profileContainer}>
 					<Image
 						style={styles.profileImage}
-						source={require('../assets/Icons/avatar.png')}
+						source={{ uri: 'http://103.176.44.189/pamsystem/assets/media/avatars/20230529124730.jpg' }}
 					/>
 					<View style={styles.profileName}>
-						<Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 25 }}>Ady Santoso</Text>
-						<Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 20 }}>534088</Text>
-						<Text style={{ color: '#00cea6', fontWeight: 'bold', fontSize: 20 }}>Kodim 1306, Kota Palu</Text>
+						<Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 25 }}>{ user ? user.name : '' }</Text>
+						<Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 20 }}>{ user ? user.imei : '' }</Text>
+						<Text style={{ color: '#00cea6', fontSize: 15 }}>Kodam { user ? user.kodam_name : '' }, { user ? user.regency_name : '' }</Text>
 					</View>
 				</View>
 				<SafeAreaView style={styles.newsListContainer}>

@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import SplashScreen from './src/screen/SplashScreen';
-import LoginScreen from './src/screen/LoginScreen';
-import MainNav from './src/navigation/MainNav'
+import { AuthProvider } from './src/context/AuthContext';
+import { DataProvider } from './src/context/DataContext';
+import AppNav from './src/navigation/AppNav';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const Stack = createNativeStackNavigator();
-
-
-function App({navigation}) {
+function App() {
     return (
-		<MainNav />
+		<AuthProvider>
+			<DataProvider>
+				<NavigationContainer>
+					<AppNav />
+				</NavigationContainer>
+			</DataProvider>
+		</AuthProvider>
     );
 }
 

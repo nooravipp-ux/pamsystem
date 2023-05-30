@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -8,15 +8,44 @@ import {
   Platform,
   PermissionsAndroid,
   Modal,
-  Button
 } from 'react-native';
+import { DataContext  } from '../context/DataContext';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import axios from 'axios';
+import { AuthContext } from '../context/AuthContext';
 
 function ReportFormStep3({ navigation }) {
 	const [imageCamera, setImageCamera] = useState(null);
 	const [imageGalery, setImageGalery] = useState(null);
 
+	const { token } = useContext(AuthContext);
+
 	const [isModalVisible, setIsModalVisible] = useState(false);
+	const { formData, updateFormData } = useContext(DataContext);
+
+	const { userInfo } = useContext(AuthContext);
+	const user = JSON.parse(userInfo);
+
+	const handleImgCamera = (value1, value2, value3) => {
+		updateFormData({ file: value1 });
+		updateFormData({ user_id: value2 });
+		updateFormData({ kodam_id: value3 });
+	};
+
+	const cleanFormData = () => {
+		updateFormData({ date: "" });
+		updateFormData({ hour: "" });
+		updateFormData({ title: "" });
+		updateFormData({ province_id: "" });
+		updateFormData({ regency_id: "" });
+		updateFormData({ district_id: "" });
+		updateFormData({ village_id: "" });
+		updateFormData({ desc: "" });
+		updateFormData({ keterangan: "" });
+		updateFormData({ file: []});
+		updateFormData({ user_id: "" });
+		updateFormData({ kodam_id: "" });
+	}
 
 	const requestCameraPermission = async () => {
 		if (Platform.OS === 'android') {
@@ -59,37 +88,17 @@ function ReportFormStep3({ navigation }) {
 	const captureImage = async () => {
 		let options = {
 			mediaType: 'photo', 
-			quality: 1
+			quality: 1,
+			includeBase64: true
+		
+			
 		};
-
-		// launchCamera(options, (response) => {
-		// 	console.log('Response = ', response);
-	
-		// 	if (response.didCancel) {
-		// 		alert('User cancelled camera picker');
-		// 		return;
-		// 	} else if (response.errorCode == 'camera_unavailable') {
-		// 		alert('Camera not available on device');
-		// 		return;
-		// 	} else if (response.errorCode == 'permission') {
-		// 		alert('Permission not satisfied');
-		// 		return;
-		// 	} else if (response.errorCode == 'others') {
-		// 		alert(response.errorMessage);
-		// 		return;
-		// 	} else {
-		// 		const data = response.assets[0];
-		// 		setImageCamera(data);
-		// 		console.log(data);
-		// 	}
-		// });
 		
 		let isCameraPermitted = await requestCameraPermission();
-		let isStoragePermitted = await requestExternalWritePermission();
 
 		if (isCameraPermitted) {
 			launchCamera(options, (response) => {
-				console.log('Response = ', response);
+				// console.log('Response = ', response);
 		
 				if (response.didCancel) {
 					alert('User cancelled camera picker');
@@ -105,8 +114,9 @@ function ReportFormStep3({ navigation }) {
 				    return;
 				} else {
 					const data = response.assets[0];
+					console.log(data)
 					setImageCamera(data);
-					console.log(data);
+					handleImgCamera(response.assets, user.id, user.id)
 				}
 			});
 		}
@@ -124,7 +134,7 @@ function ReportFormStep3({ navigation }) {
 			if (response.didCancel) {
 				alert('User cancelled camera picker');
 				return;
-			} else if (response.errorCode == 'camera_unavailable') {
+			}if (response.errorCode == 'camera_unavailable') {
 				alert('Camera not available on device');
 				return;
 			} else if (response.errorCode == 'permission') {
@@ -135,7 +145,7 @@ function ReportFormStep3({ navigation }) {
 				return;
 			} else {
 				const data = response.assets[0];
-				setImageGalery(data);
+				setImageGalery(data, formData.user_id, formData.kodam_id);
 				console.log(data);
 			}
 		});
@@ -151,8 +161,31 @@ function ReportFormStep3({ navigation }) {
 	
 	const handleConfirm = () => {
 		// Lakukan tindakan setelah pengguna mengonfirmasi
+		// Post Data ke server
+		// close modal dan kembali ke halaman list pelaporan
 		setIsModalVisible(false);
+		console.log(formData)
+		// navigation.navigate('ReportScreen');
+		postData();
+		navigation.navigate('ReportScreen');
+		cleanFormData();
 	};
+
+	const postData = async () => {
+		try {
+			const response = await axios.post('http://103.176.44.189/pamsystem-api/api/reports/insert', formData, {
+				headers: {
+					'Content-Type' : 'multipart/form-data',
+					Authorization: `Bearer ${JSON.parse(token)}`,
+				},
+			});
+
+			console.log('Upload Response : ', response.data);
+		} catch(error){
+			console.log('Error sending data : ', error);
+		}
+	}
+
 
 	const ConfirmationModal = ({ visible, onCancel, onConfirm }) => {
 		return (
@@ -168,7 +201,7 @@ function ReportFormStep3({ navigation }) {
 				<View style={{}}>
 					<TouchableOpacity
 						style={{backgroundColor: '#00cea6', paddingVertical: 17, marginTop: 30, marginBottom: 10}}
-						onPress={handlePressSubmit}
+						onPress={handleConfirm}
 					>
 					<Text style={styles.buttonText}>SIMPAN & KIRIM</Text>
 					</TouchableOpacity>
@@ -183,7 +216,7 @@ function ReportFormStep3({ navigation }) {
 			</View>
 		  </Modal>
 		);
-	  };
+	};
 
     return (
         <View style={styles.container}>
@@ -209,20 +242,21 @@ function ReportFormStep3({ navigation }) {
 			>
               	<Text style={styles.buttonText}>AMBIL DATA DARI PONSEL</Text>
             </TouchableOpacity>
-			{
-				imageCamera != null &&
-				<Image
-					source={{ uri:imageCamera.uri }}
-					style={styles.profileImage}
-			  	/>
-			}
-			{
-				imageGalery!= null &&
-				<Image
-					source={{ uri:imageGalery.uri }}
-					style={styles.profileImage}
-			  	/>
-			}
+			{imageCamera !== null ? (
+                <>
+                    <Image
+						source={{ uri:imageCamera.uri }}
+						style={styles.profileImage}
+			  		/>
+                </>
+                ) : (
+                <>
+                    <Image
+						source={require('../assets/Icons/avatar.png')}
+						style={styles.profileImage}
+					/>
+                </>
+            )}
            
             <Text style={{ alignItems: 'center' }}></Text>
 			<ConfirmationModal

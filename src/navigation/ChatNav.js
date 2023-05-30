@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import NewsScreen from '../screen/NewsScreen';
-import NewsDetailScreen from '../screen/NewsDetailScreen';
+import ChatList from '../screen/chat/ChatList';
+import ChatRoom from '../screen/chat/ChatRoom';
 
 const ChatStack = createNativeStackNavigator();
 
@@ -13,8 +13,8 @@ const ChatNav = () => {
             initialRouteName="NewsScreen"
             screenOptions={{ headerShown: false}}
         >
-            <ChatStack.Screen name="NewsScreen" component={NewsScreen} />
-            <ChatStack.Screen name="NewsDetailScreen" component={NewsDetailScreen} />
+            <ChatStack.Screen name="ChatList" component={ChatList} />
+            <ChatStack.Screen name="ChatRoom" component={ChatRoom} />
         </ChatStack.Navigator>
     );
 };

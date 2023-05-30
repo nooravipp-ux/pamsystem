@@ -1,13 +1,19 @@
-import React, { useState }  from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, ImageBackground, Alert } from 'react-native';
+import React, { useState, useContext, useEffect }  from 'react';
+import { View, TextInput, TouchableOpacity, Text, StyleSheet, ImageBackground, Alert, PermissionsAndroid } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DeviceInfo from 'react-native-device-info';
 import axios from 'axios';
+import { AuthContext } from '../context/AuthContext';
+import IMEI from 'react-native-imei';
+import { request, PERMISSIONS } from 'react-native-permissions';
 
-const LoginScreen = ({ navigation }) => {
+const LoginScreen = ({ navigation}) => {
+
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [imei, setImei] = useState('');
+
+    const { setToken, setUserInfo } = useContext(AuthContext);
 
     DeviceInfo.getAndroidId().then((uniqueId) => {
         console.log(uniqueId);
@@ -22,25 +28,18 @@ const LoginScreen = ({ navigation }) => {
         })
         .then(res => {
             let data = res.data;
-            console.log('Status : ', data.status);
-            console.log('Message: ', data.message);
-            console.log('Data: ', data.response.data);
-            console.log('Token: ', data.response.token);
-
+            console.log(res.data)
             if(data.status == 200 && data.result == true){
-                alert(data.message)
-                AsyncStorage.setItem("token", JSON.stringify(data.response));
-                setTokenState(JSON.stringify(data.response));
-
-                // navigation.navigate('Dashboard');
+                setToken(JSON.stringify(res.data.response.token));
+                setUserInfo(JSON.stringify(res.data.response.data));
+                navigation.navigate('MainNav', { screen: 'Dashboard' });
             }else{
-                alert('Login Gagal')
+                alert(data.message);
             }
         })
-        .catch( error => {
-            alert(error)
+        .catch(error => {
+            console.log(error)
         })
-        // navigation.replace('Dashboard');
 	};
 
     return(
@@ -63,6 +62,7 @@ const LoginScreen = ({ navigation }) => {
                 />
                 <TouchableOpacity 
                     style={styles.buttonContainer} 
+                    // onPress={() => login(username, password, imei)}
                     onPress={() => handleLogin()}
                 >
                     <Text style={styles.buttonText}>LOGIN</Text>
