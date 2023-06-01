@@ -26,8 +26,8 @@ const HomeScreen = ({ navigation }) => {
 					/>
 					<View style={styles.profileName}>
 						<Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 25 }}>{ user ? user.name : '' }</Text>
-						<Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 20 }}>{ user ? user.imei : '' }</Text>
-						<Text style={{ color: '#00cea6', fontSize: 15 }}>Kodam { user ? user.kodam_name : '' }, { user ? user.regency_name : '' }</Text>
+						<Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 15 }}>Kodam { user ? user.kodam_name : '' }</Text>
+						<Text style={{ color: '#00cea6', fontSize: 15 }}> { user ? user.regency_name : '' }</Text>
 					</View>
 				</View>
 				<SafeAreaView style={styles.newsListContainer}>

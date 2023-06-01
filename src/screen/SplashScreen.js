@@ -7,7 +7,7 @@ const SplashScreen = ({ navigation }) => {
     useEffect(() => {
         setTimeout(() => {
             handleGetToken();
-        }, 2000);
+        }, 3000);
     });
 
     const handleGetToken = async () => {
@@ -15,7 +15,7 @@ const SplashScreen = ({ navigation }) => {
         if(!dataToken){
             navigation.replace('Login');
         }else{
-            navigation.replace('Dashboard');
+            navigation.replace('MainNav');
         }
     };
 

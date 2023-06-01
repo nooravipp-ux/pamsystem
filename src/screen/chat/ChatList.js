@@ -1,159 +1,170 @@
-import React, { useState, useEffect,useRef } from 'react';
-import {
-  SafeAreaView,
-  View,
-  FlatList,
-  TextInput,
-  TouchableOpacity,
-  Text,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Image,
-  Button
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, Image, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert, TextInput } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import DateTimePicker from '@react-native-community/datetimepicker';
+const ChatList = ( {navigation} ) => {
 
-const ChatList = () => {
-  const [messages, setMessages] = useState([]);
-  const [inputText, setInputText] = useState('');
-  const flatListRef = useRef(null);
+	const [search, setSearch] = useState();
+	useEffect(() => {
+		removeToken();
+    }, []);
 
-  const handleSend = () => {
-    if (inputText.trim() === '') return;
+	const DATA = [
+		{
+			id: '0',
+			title: 'First Item',
+		},
+		{
+			id: '1',
+			title: 'Second Item',
+		},
+		{
+			id: '2',
+			title: 'First Item',
+		},
+		{
+			id: '3',
+			title: 'Second Item',
+		},
+		{
+			id: '4',
+			title: 'First Item',
+		},
+		{
+			id: '5',
+			title: 'Second Item',
+		},
+		{
+			id: '6',
+			title: 'First Item',
+		},
+		{
+			id: '7',
+			title: 'Second Item',
+		},
+		{
+			id: '8',
+			title: 'First Item',
+		},
+		{
+			id: '10',
+			title: 'Second Item',
+		}
+	];
 
-    const newMessage = {
-      id: messages.length + 1,
-      text: inputText
+	const removeToken = async () => {
+        try {
+            await AsyncStorage.removeItem('token')
+        } catch (error) {
+            console.log(error);
+        }
     };
 
-    setMessages([...messages, newMessage]);
-    setInputText('');
-  };
-
-  useEffect(() => {
-    // Menambahkan efek samping untuk menscroll ke bagian bawah daftar pesan
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      if (messages.length > 0) {
-        flatListRef.current.scrollToEnd({ animated: true });
-      }
-    }, 100);
-  };
-
-  const renderItem = ({ item }) => (
-    <View style={styles.messageContainer}>
-      <Text style={styles.messageText}>{item.text}</Text>
-    </View>
-  );
-
-  const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-
-  const handleDateChange = (event, selectedDate) => {
-		const currentDate = selectedDate || date;
-		setShowDatePicker(false);
-		setDate(currentDate);
-  };
-
-  return (
-    <SafeAreaView style={styles.container}>
-          <View style={{flexDirection: 'row', paddingBottom: 5, borderBottomWidth: 1, borderBottomColor: '#adbcb1',}}>
-          <Image
-            style={{ width: 35, height: 35, marginRight: 5, tintColor: '#ffffff'}}
-            source={require('../../assets/Icons/title.png')}
-          />
-          <Text style={{fontWeight: 'bold',fontSize: 35, color: '#ffffff'}}>Chat</Text>
-          <View>
-		{/* Tambahkan tombol untuk memperlihatkan DateTimePicker */}
-		<Button
-			title="Pilih Tanggal"
-			onPress={() => setShowDatePicker(true)}
-		/>
-
-		{/* Tampilkan DateTimePicker jika showDatePicker bernilai true */}
-		{showDatePicker && (
-			<DateTimePicker
-			value={date}
-			mode="date"
-			is24Hour={true}
-			display="spinner"
-			onChange={handleDateChange}
+	const Item = ({ title }) => (
+		<TouchableOpacity 
+			style={styles.newsContainer}
+			onPress={() => navigation.navigate('ChatRoom')}
+		>
+			<Image
+				style={styles.newsImage}
+				source={require('../../assets/Images/sldr.jpg')}
 			/>
-		)}
+			<View style={{ flex:3, flexDirection: 'column' }}>
+				<View style={styles.newsDescription}>
+					<Text style={{ flex: 1, color: '#ffffff', fontWeight: 'bold' }}>OFFICER NAME</Text>
+					<Text style={{ color: '#00cea6'}}>20:30 PM</Text>
+				</View>
+				<View style={styles.newsTitle}>
+						<Text style={{ flex: 1, color: '#ffffff', textAlign: 'left' }}>Saya harap kegiatan yang kita lakukan besok tidak ada hambatan apapun...</Text>
+				</View>
+			</View>
+		</TouchableOpacity >
+	);
 
-		{/* Tampilkan tanggal yang dipilih */}
-		<Text>Tanggal dipilih: {date.toLocaleDateString()}</Text>
+	return (
+		<View style={styles.container}>
+			<View style={{flexDirection: 'row', paddingBottom: 5, borderBottomWidth: 1, borderBottomColor: '#adbcb1',}}>
+				<Image
+					style={{ width: 35, height: 35, marginRight: 5, tintColor: '#ffffff'}}
+					source={require('../../assets/Icons/title.png')}
+				/>
+				<Text style={{fontWeight: 'bold',fontSize: 35, color: '#ffffff'}}>Chat</Text>
+			</View>
+			<View style={styles.searchBox}>
+				<TextInput
+					style={styles.input}
+					value={search}
+					placeholder='Cari ...'
+					onChangeText={ (text) => {setSearch(text)}}
+				/>
+			</View>
+			<SafeAreaView style={styles.newsListContainer}>
+				<FlatList
+					data={DATA}
+					renderItem={({ item }) => <Item title={item.title} />}
+					keyExtractor={item => item.id}
+				/>
+			</SafeAreaView>
 		</View>
-      </View>
-    </SafeAreaView>
-  );
+	);
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,    
-        padding: 15,
-        backgroundColor: '#29352e'
-    },
-    profileContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 10,
-        padding: 10
-    },
-    profileImage: {
-        flex: 1,
-        width: 40,
-        height: 60,
-        borderRadius: 5,
-        borderWidth: 2,
-        marginRight: 8,
-    },
-    profileName: {
-        flex: 3,
-        paddingLeft: 7,
-    },
-    messageContainer: {
-        padding: 10,
-        backgroundColor: '#FFFFFF',
-        marginVertical: 5,
-        marginHorizontal: 10,
-        borderRadius: 5,
-    },
-    messageText: {
-        fontSize: 16,
-        color: 'black'
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 10,
-    },
-    input: {
-        flex: 1,
+	container: {
+		flex: 1,
+		padding: 15,
+		backgroundColor: '#29352e'
+	},
+	heading: {
+		fontWeight: 'bold',
+		fontSize: 35,
+		color: '#ffffff',
+		paddingBottom: 5,
+		borderBottomWidth: 1,
+		borderBottomColor: '#adbcb1',
+	},
+	searchBox: {
+		justifyContent: 'center',
+		paddingTop: 10,
+		padding: 10
+	},
+	newsListContainer: {
+		flex: 1,
+		borderRadius: 3,
+	},
+	newsContainer: {
+		flex: 1,
+		flexDirection: 'row',
+		padding: 8,
+		marginBottom: 15
+	},
+	newsImage: {
+		width: 40,
+		height: 40,
+		marginRight: 8,
+	},
+	newsDescription: {
+		flexDirection: 'row', 
+		justifyContent: 'space-between',
+		paddingLeft: 7
+	},
+	newsTitle: {
+		flexDirection: 'row',
+		justifyContent: 'center',
+		paddingLeft: 7,
+		paddingTop: 5,
+	},
+	input: {
+        width: '100%',
         height: 40,
+        borderColor: '#00cea6',
         borderWidth: 1,
-        borderColor: '#CCCCCC',
-        borderRadius: 3,
+        borderRadius: 4,
+        marginBottom: 12,
         paddingHorizontal: 10,
-        color: 'black',
-        fontWeight: 'bold',
-        backgroundColor: 'white'
+        color: 'white',
     },
-    sendButton: {
-        marginLeft: 10,
-        paddingHorizontal: 6,
-        paddingVertical: 10
-    },
-    sendButtonText: {
-        color: '#FFFFFF',
-        fontWeight: 'bold',
-    },
+
 });
 
 export default ChatList;

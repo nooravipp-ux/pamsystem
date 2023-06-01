@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { View, Text, TextInput,StyleSheet, TouchableOpacity, Image, SafeAreaView, FlatList,Pressable, Modal} from 'react-native';
-import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { DataContext  } from '../context/DataContext';
 import { AuthContext } from '../context/AuthContext';
 import moment from 'moment';
@@ -13,10 +13,15 @@ const ReportFormStep1 = ( {navigation} ) => {
 	const [modalKecVisible, setModalKecVisible] = useState(false);
 	const [modalKelVisible, setModalKelVisible] = useState(false);
 
+	const [provText, setProvText] = useState('');
+	const [kabText, setKabText] = useState('');
+	const [kecText, setKecText] = useState('');
+	const [kelText, setKelText] = useState('');
+
 	const [prov, setProv] = useState(null);
 	const [kab, setKab] = useState(null);
-	const [kec, setKec] = useState();
-	const [kel, setKel] = useState();
+	const [kec, setKec] = useState(null);
+	const [kel, setKel] = useState(null);
 
 	const { token } = useContext(AuthContext);
 	const { formData, updateFormData } = useContext(DataContext);
@@ -24,73 +29,66 @@ const ReportFormStep1 = ( {navigation} ) => {
 	const [date, setDate] = useState(new Date());
 	const [time, setTime] = useState(new Date());
 
-	const onDateChange = (event, selectedDate) => {
-		const currentDate = selectedDate;
+	const [formattedDate, setFormattedDate] = useState('');
+	const [formattedTime, setFormattedTime] = useState('');
+
+	const [showTimePicker, setShowTimePicker] = useState(false);
+	const [showDatePicker, setShowDatePicker] = useState(false);
+
+	const onChangeDate = (event, selectedDate) => {
+		const currentDate = new Date(selectedDate) || date;
+		const tempFormattedDate = moment(currentDate).format('MM-DD-YYYY');
+
+		setShowDatePicker(Platform.OS === 'ios');
 		setDate(currentDate);
-		console.log(selectedDate);
-		handleInputDate(date.toLocaleDateString())
-	};
+		updateFormData({ date: tempFormattedDate });
+		setFormattedDate(tempFormattedDate);
 
-	const onTimeChange = (event, selectedDate) => {
+		console.log('Date From State :', formattedDate);
+		console.log('Date From data :', formData.date);
+    };
 
-		console.log('time change')
-		const currentDate = selectedDate;
-		setTime(currentDate);
-		handleInputHour(time.toLocaleTimeString())
-	};
+	const onChangeTime = (event, selectedTime) => {
+        const currentTime = new Date(selectedTime) || time;
+		const tempFormattedTime = moment(currentTime).format('HH:mm');
 
-	const showDateMode = (currentMode) => {
-		DateTimePickerAndroid.open({
-			value: date,
-			display: 'spinner',
-			onChange: onDateChange,
-			mode: currentMode,
-		});
-	};
+		setShowTimePicker(Platform.OS === 'ios');
+		setTime(currentTime);
+		updateFormData({ hour: tempFormattedTime });
+		setFormattedTime(tempFormattedTime);
 
-	const showTimeMode = (currentMode) => {
-		DateTimePickerAndroid.open({
-			value: date,
-			display: 'spinner',
-			onChange: onTimeChange,
-			mode: currentMode,
-			is24Hour: true,
-		});
-	};
+		console.log('Time From State :', formattedTime);
+		console.log('Time From data :', formData.hour);
+    };
 
 	// Handle Showing modal Date Picker
 	const showDatepicker = () => {
-		showDateMode('date');
+		setShowDatePicker(true);
 	};
 
 	const showTimepicker = () => {
-		showTimeMode('time');
-	};
-
-	// Handle Change data and time
-	const handleInputDate = (value) => {
-		updateFormData({ date: moment(value, 'YYYY/MM/DD').format('DD-MM-YYYY')});
-	};
-
-	const handleInputHour= (value) => {
-		updateFormData({ hour: moment(value, 'HH.mm.ss').format('HH:mm')});
+		setShowTimePicker(true);
 	};
 
 	//Handle onChange Tempat
-	const handleInputProvince = (value) => {
+	const handleInputProvince = (value, text) => {
 		updateFormData({ province_id: value });
+		setProvText(text);
 	};
 
-	const handleInputRegency = (value) => {
+	const handleInputRegency = (value, text) => {
 		updateFormData({ regency_id: value });
+		setKabText(text);
 	};
 
-	const handleInputDistrict = (value) => {
+	const handleInputDistrict = (value, text) => {
 		updateFormData({ district_id: value });
+		setKecText(text);
 	};
 
-	const handleInputVillage = (value) => {
+	const handleInputVillage = (value, text) => {
 		updateFormData({ village_id: value });
+		setKelText(text);
 	};
 
 	//Handle Request Data Master
@@ -193,72 +191,13 @@ const ReportFormStep1 = ( {navigation} ) => {
 		  }
 	}
 
-	const DATA = [
-		{
-			id: '0',
-			title: 'First Item',
-		},
-		{
-			id: '1',
-			title: 'Second Item',
-		},
-		{
-			id: '2',
-			title: 'First Item',
-		},
-		{
-			id: '3',
-			title: 'Second Item',
-		},
-		{
-			id: '4',
-			title: 'First Item',
-		},
-		{
-			id: '5',
-			title: 'Second Item',
-		},
-		{
-			id: '6',
-			title: 'First Item',
-		},
-		{
-			id: '7',
-			title: 'First Item',
-		},
-		{
-			id: '8',
-			title: 'Second Item',
-		},
-		{
-			id: '9',
-			title: 'First Item',
-		},
-		{
-			id: '10',
-			title: 'Second Item',
-		},
-		{
-			id: '11',
-			title: 'First Item',
-		},
-		{
-			id: '12',
-			title: 'Second Item',
-		},
-		{
-			id: '13',
-			title: 'First Item',
-		}
-	];
-
 	const ItemProv = ({ id, title }) => (
 		<View style={styles.newsContainer}>
 			<View style={{ flex:3, flexDirection: 'column' }}>
 				<View style={styles.newsDescription}>
 					<TouchableOpacity
 						onPress={() => {
-							handleInputProvince(id);
+							handleInputProvince(id, title);
 							setModalProvVisible(false);
 						}}>
 						<View style={styles.newsTitle}>
@@ -276,7 +215,7 @@ const ReportFormStep1 = ( {navigation} ) => {
 				<View style={styles.newsDescription}>
 					<TouchableOpacity
 						onPress={() => {
-							handleInputRegency(id)
+							handleInputRegency(id, title)
 							setModalKabVisible(false)
 						}}>
 						<View style={styles.newsTitle}>
@@ -294,7 +233,7 @@ const ReportFormStep1 = ( {navigation} ) => {
 				<View style={styles.newsDescription}>
 					<TouchableOpacity
 						onPress={() => {
-							handleInputDistrict(id)
+							handleInputDistrict(id, title)
 							setModalKecVisible(false)
 						}}>
 						<View style={styles.newsTitle}>
@@ -312,7 +251,7 @@ const ReportFormStep1 = ( {navigation} ) => {
 				<View style={styles.newsDescription}>
 					<TouchableOpacity
 						onPress={() => {
-							handleInputVillage(id)
+							handleInputVillage(id, title)
 							setModalKelVisible(false)
 						}}>
 						<View style={styles.newsTitle}>
@@ -340,8 +279,8 @@ const ReportFormStep1 = ( {navigation} ) => {
 					<TextInput 
 						style={styles.input}
 						editable={false}
-						value={formData.date}
-						onChangeText={handleInputDate}
+						value={formattedDate}
+						onChangeText={(text) => setFormattedDate(text)}
 					/>
 					<TouchableOpacity onPress={showDatepicker} style={{padding: 5}}>
 						<Image
@@ -349,7 +288,16 @@ const ReportFormStep1 = ( {navigation} ) => {
 							source={require('../assets/Icons/kalender.png')}
 							style={{ width: 20, height: 20, marginBottom: 17}}
 						/>
-					</TouchableOpacity> 
+					</TouchableOpacity>
+					{showDatePicker && (
+						<DateTimePicker
+							testID="datePicker"
+							value={date}
+							mode="date"
+							display="spinner"
+							onChange={onChangeDate}
+						/>
+					)} 
 				</View>
 
 				<Text style={styles.inputLabel}>WAKTU</Text>
@@ -357,8 +305,8 @@ const ReportFormStep1 = ( {navigation} ) => {
 					<TextInput 
 						style={styles.input}
 						editable={false}
-						value={formData.hour}
-						onChangeText={handleInputHour}
+						value={formattedTime}
+						onChangeText={(text) => setFormattedTime(text)}
 					/>
 					<TouchableOpacity onPress={showTimepicker} style={{padding: 5}}>
 						<Image
@@ -366,7 +314,17 @@ const ReportFormStep1 = ( {navigation} ) => {
 							source={require('../assets/Icons/kalender.png')}
 							style={{ width: 20, height: 20, marginBottom: 17}}
 						/>
-					</TouchableOpacity> 
+					</TouchableOpacity>
+					{showTimePicker && (
+						<DateTimePicker
+							testID="timePicker"
+							value={time}
+							mode="time"
+							is24Hour={true}
+							display="spinner"
+							onChange={onChangeTime}
+						/>
+					)} 
 				</View>
 
 				<Text style={styles.inputLabel}>TEMPAT</Text>
@@ -376,7 +334,7 @@ const ReportFormStep1 = ( {navigation} ) => {
 						editable={false} 
 						style={styles.input}
 						placeholder='Provinsi'
-						value={formData.province_id}
+						value={provText}
 						onChangeText={handleInputProvince}
 					/>
 					<TouchableOpacity
@@ -396,7 +354,7 @@ const ReportFormStep1 = ( {navigation} ) => {
 						editable={false} 
 						style={styles.input}
 						placeholder='Kabupaten/Kota'
-						value={formData.regency_id}
+						value={kabText}
 						onChangeText={handleInputRegency}
 					/>
 					<TouchableOpacity o
@@ -416,7 +374,7 @@ const ReportFormStep1 = ( {navigation} ) => {
 						editable={false} 
 						style={styles.input}
 						placeholder='Kecamatan'
-						value={formData.district_id}
+						value={kecText}
 						onChangeText={handleInputDistrict}
 					/>
 					<TouchableOpacity 
@@ -436,7 +394,7 @@ const ReportFormStep1 = ( {navigation} ) => {
 						editable={false} 
 						style={styles.input}
 						placeholder='Kelurahan/Desa'
-						value={formData.village_id}
+						value={kelText}
 						onChangeText={handleInputVillage}
 					/>
 					<TouchableOpacity 

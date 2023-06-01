@@ -8,7 +8,10 @@ import {
   Platform,
   PermissionsAndroid,
   Modal,
+  SafeAreaView,
+  ScrollView
 } from 'react-native';
+import { Loading } from '../components/Loading';
 import { DataContext  } from '../context/DataContext';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import axios from 'axios';
@@ -20,7 +23,10 @@ function ReportFormStep3({ navigation }) {
 
 	const { token } = useContext(AuthContext);
 
+	const [isLoading, setIsLoading] = useState(false);
 	const [isModalVisible, setIsModalVisible] = useState(false);
+	const [isModalSuccessVisible, setIsModalSuccessVisible] = useState(false);
+
 	const { formData, updateFormData } = useContext(DataContext);
 
 	const { userInfo } = useContext(AuthContext);
@@ -89,9 +95,6 @@ function ReportFormStep3({ navigation }) {
 		let options = {
 			mediaType: 'photo', 
 			quality: 1,
-			includeBase64: true
-		
-			
 		};
 		
 		let isCameraPermitted = await requestCameraPermission();
@@ -160,28 +163,55 @@ function ReportFormStep3({ navigation }) {
 	};
 	
 	const handleConfirm = () => {
-		// Lakukan tindakan setelah pengguna mengonfirmasi
-		// Post Data ke server
-		// close modal dan kembali ke halaman list pelaporan
-		setIsModalVisible(false);
 		console.log(formData)
-		// navigation.navigate('ReportScreen');
+		setIsLoading(true);
 		postData();
-		navigation.navigate('ReportScreen');
-		cleanFormData();
 	};
 
 	const postData = async () => {
 		try {
-			const response = await axios.post('http://103.176.44.189/pamsystem-api/api/reports/insert', formData, {
+
+			let uploadData = new FormData();
+            Object.keys(formData).forEach(element => {
+                if (element != 'file') {
+                    uploadData.append(element, formData[element]);
+                }
+            });
+			
+            uploadData.append("file", {
+                uri: imageCamera.uri,
+                type: imageCamera.type,
+                name: imageCamera.fileName
+            });
+            console.log(uploadData);
+
+			const response = await axios.post('http://103.176.44.189/pamsystem-api/api/reports/insert', uploadData, {
 				headers: {
-					'Content-Type' : 'multipart/form-data',
+					"Content-Type" : "multipart/form-data",
 					Authorization: `Bearer ${JSON.parse(token)}`,
 				},
 			});
 
+			if(response.status === 200 || response.status === "200"){
+				setIsLoading(false);
+				cleanFormData();
+				setIsModalVisible(false);
+				setIsModalSuccessVisible(true);
+
+				setTimeout( () => {
+					setIsModalSuccessVisible(false);
+					navigation.navigate('ReportScreen');
+				}, 3000);
+			}else{
+				setIsModalVisible(false);
+				alert('Gagal kirim Laporan')
+			}
+
 			console.log('Upload Response : ', response.data);
 		} catch(error){
+			setIsLoading(false);
+			setIsModalVisible(false);
+			alert('Gagal kirim Laporan')
 			console.log('Error sending data : ', error);
 		}
 	}
@@ -199,6 +229,11 @@ function ReportFormStep3({ navigation }) {
 			  <View style={styles.modalContent}>
 				<Text style={{color: 'black', fontWeight: '700', fontSize: 16}}>Apakah Anda Ingin Menyelesaikan Laporan ?</Text>
 				<View style={{}}>
+					{isLoading ? (
+						<Loading />
+					) : (
+						<></>
+					)}
 					<TouchableOpacity
 						style={{backgroundColor: '#00cea6', paddingVertical: 17, marginTop: 30, marginBottom: 10}}
 						onPress={handleConfirm}
@@ -218,8 +253,40 @@ function ReportFormStep3({ navigation }) {
 		);
 	};
 
+	const SuccessModal = ({ visible, onCancel, onConfirm }) => {
+		return (
+			<Modal
+				visible={visible}
+				animationType="fade"
+				transparent={true}
+			>
+				<View style={styles.modalContainer}>
+					<View style={styles.modalContent}>
+						<Text style={{color: 'black', fontWeight: '700', fontSize: 16}}>Laporan Berhasil di Kirim !</Text>
+					</View>
+				</View>
+			</Modal>
+		);
+	}
+
+	const FailedModal = ({ visible, onCancel, onConfirm }) => {
+		return (
+			<Modal
+				visible={visible}
+				animationType="fade"
+				transparent={true}
+			>
+				<View style={styles.modalContainer}>
+					<View style={styles.modalContent}>
+						<Text style={{color: 'black', fontWeight: '700', fontSize: 16}}>Laporan Gagal di Kirim !</Text>
+					</View>
+				</View>
+			</Modal>
+		);
+	}
+
     return (
-        <View style={styles.container}>
+        <SafeAreaView  style={styles.container}>
             <View style={{flexDirection: 'row', paddingBottom: 5, borderBottomWidth: 1, borderBottomColor: '#adbcb1',}}>
 				<Image
 					style={{ width: 35, height: 35, marginRight: 5, tintColor: '#ffffff'}}
@@ -229,38 +296,45 @@ function ReportFormStep3({ navigation }) {
 			</View>
             <Text style={styles.welcomeText}>Tambah Pelaporan</Text>
             <Text style={styles.inputLabel}>FOTO, VIDEO, DOKUMEN</Text>
-			<TouchableOpacity 
-                onPress={ () => captureImage() } 
-                style={styles.btnPicker}
-            >
-            	<Text style={styles.buttonText}>AMBIL FOTO</Text>
-            </TouchableOpacity>
+			<ScrollView>
+				<TouchableOpacity 
+					onPress={ () => captureImage() } 
+					style={styles.btnPicker}
+				>
+					<Text style={styles.buttonText}>AMBIL FOTO</Text>
+				</TouchableOpacity>
 
-            <TouchableOpacity 
-				onPress={ () => openGalery() }
-				style={styles.btnPicker}
-			>
-              	<Text style={styles.buttonText}>AMBIL DATA DARI PONSEL</Text>
-            </TouchableOpacity>
-			{imageCamera !== null ? (
-                <>
-                    <Image
-						source={{ uri:imageCamera.uri }}
-						style={styles.profileImage}
-			  		/>
-                </>
-                ) : (
-                <>
-                    <Image
-						source={require('../assets/Icons/avatar.png')}
-						style={styles.profileImage}
-					/>
-                </>
-            )}
-           
-            <Text style={{ alignItems: 'center' }}></Text>
+				<TouchableOpacity 
+					onPress={ () => openGalery() }
+					style={styles.btnPicker}
+				>
+					<Text style={styles.buttonText}>AMBIL DATA DARI PONSEL</Text>
+				</TouchableOpacity>
+				<View style={styles.imgContainer}>
+					{imageCamera !== null ? (
+						<>
+							<Image
+								source={{ uri:imageCamera.uri }}
+								style={styles.profileImage}
+							/>
+						</>
+						) : (
+						<>
+							<Image
+								source={require('../assets/Icons/avatar.png')}
+								style={styles.profileImage}
+							/>
+						</>
+					)}
+				</View>
+			</ScrollView>
 			<ConfirmationModal
 				visible={isModalVisible}
+				onCancel={handleCancel}
+				onConfirm={handleConfirm}
+			/>
+			<SuccessModal 
+				visible={isModalSuccessVisible}
 				onCancel={handleCancel}
 				onConfirm={handleConfirm}
 			/>
@@ -285,7 +359,7 @@ function ReportFormStep3({ navigation }) {
                   <Text style={styles.buttonText}>SIMPAN & KIRIM</Text>
                 </TouchableOpacity>
             </View>
-        </View>
+        </SafeAreaView >
     );
 }
 
@@ -344,9 +418,15 @@ const styles = StyleSheet.create({
 		fontWeight: 'bold',
 		paddingBottom: 5
 	},
+	imgContainer: {
+		flex: 1,
+		flexDirection: 'column',
+		justifyContent: 'center',
+		alignItems: 'center'
+	},
 	profileImage: {
-		width: '100%',
-		height: '50%',
+		width: 400,
+		height: 400,
 		borderRadius: 5,
 		borderWidth: 2,
 		marginRight: 8,

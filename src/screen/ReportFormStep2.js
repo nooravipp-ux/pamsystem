@@ -1,13 +1,9 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TextInput,StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TextInput,StyleSheet, TouchableOpacity, Image, SafeAreaView, ScrollView } from 'react-native';
 import { DataContext  } from '../context/DataContext';
 
 const ReportFormStep2 = ( {navigation} ) => {
 	const { formData, updateFormData } = useContext(DataContext);
-
-	let data = [{
-		value: 'Sosial Budaya',
-	}]
 
 	const handleInputUraianKejadian = (value) => {
 		updateFormData({ desc: value });
@@ -18,7 +14,7 @@ const ReportFormStep2 = ( {navigation} ) => {
 	};
 
     return(
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
 			<View style={{flexDirection: 'row', paddingBottom: 5, borderBottomWidth: 1, borderBottomColor: '#adbcb1',}}>
 				<Image
 					style={{ width: 35, height: 35, marginRight: 5, tintColor: '#ffffff'}}
@@ -27,7 +23,7 @@ const ReportFormStep2 = ( {navigation} ) => {
 				<Text style={{fontWeight: 'bold',fontSize: 35, color: '#ffffff'}}>Laporan</Text>
 			</View>
 			<Text style={styles.welcomeText}>Tambah Pelaporan</Text>
-			<View>
+			<ScrollView>
 				<Text style={styles.inputLabel}>URAIAN KEJADIAN</Text>
 				<TextInput
 					style={styles.textArea}
@@ -44,7 +40,7 @@ const ReportFormStep2 = ( {navigation} ) => {
 					multiline={true}
 					numberOfLines={4}
 				/>
-			</View>
+			</ScrollView>
 			<View style={styles.buttonContainer}>
 				<TouchableOpacity
                   style={styles.btn}
@@ -65,7 +61,7 @@ const ReportFormStep2 = ( {navigation} ) => {
                   <Text style={styles.buttonText}>LANJUT</Text>
                 </TouchableOpacity>
             </View>
-		</View>
+		</SafeAreaView>
     );
 };
 

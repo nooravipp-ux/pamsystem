@@ -1,54 +1,63 @@
-import React from 'react';
-import { View, Text, FlatList, Image, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useContext, useState } from 'react';
+import { View, Text, FlatList, Image, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import axios from 'axios';
+import { AuthContext } from '../context/AuthContext';
 
 const ReportScreen = ( {navigation} ) => {
-	const DATA = [
-		{
-			id: '0',
-			title: 'First Item',
-		},
-		{
-			id: '1',
-			title: 'Second Item',
-		},
-		{
-			id: '2',
-			title: 'First Item',
-		},
-		{
-			id: '3',
-			title: 'Second Item',
-		},
-		{
-			id: '4',
-			title: 'First Item',
-		},
-		{
-			id: '5',
-			title: 'Second Item',
-		},
-		{
-			id: '6',
-			title: 'First Item',
-		}
-	];
+	const { token } = useContext(AuthContext);
+	const { userInfo } = useContext(AuthContext);
 
-	const Item = ({ title }) => (
-		<View style={styles.newsContainer}>
+	const [reports, setReports] = useState(null);
+
+	useEffect(() => {
+		const user = JSON.parse(userInfo);
+		console.log('Token :', token);
+		const getReports = async () => {
+			try {
+				const response = await axios.get('http://103.176.44.189/pamsystem-api/api/reports?perPage=100&page=1&search=', {
+					headers: {
+						Authorization: `Bearer ${JSON.parse(token)}`,
+					},
+				});
+
+				if(response){
+					setReports(response.data.response.data);
+					console.log('berhasil fetch data: ', reports)
+	
+				}else{
+					console.log('gagal fetch data')
+				}
+			} catch (error) {
+				console.error(error);
+			}				
+		}
+
+		getReports();
+	}, []);
+
+	const Item = ({ id, desc, date , hour}) => (
+		<TouchableOpacity 
+			style={styles.newsContainer}
+			onPress={() => {
+				navigation.navigate('ReportDetailScreen', {
+					reportId: id
+				})}
+			}
+		>
 			<Image
 				style={styles.newsImage}
 				source={require('../assets/Images/banner.jpg')}
 			/>
 			<View style={{ flex:3, flexDirection: 'column' }}>
 				<View style={styles.newsDescription}>
-					<Text style={{ flex: 1, color: '#ffffff' }}>05 Mei 2023</Text>
-						<Text style={{ color: '#ffffff'}}>Oleh : Administrator</Text>
+					<Text style={{ flex: 1, color: '#ffffff' }}>{date}</Text>
+						<Text style={{ color: '#ffffff'}}>{hour}</Text>
 					</View>
 					<View style={styles.newsTitle}>
-						<Text style={{ flex: 1, color: '#ffffff', fontWeight: 'bold', textAlign: 'left' }}>Lepas Sambut komandan kodim 1306 Kota Palu</Text>
+						<Text style={{ flex: 1, color: '#ffffff', fontWeight: 'bold', textAlign: 'left' }}>{desc}</Text>
 					</View>
 			</View>
-		</View>
+		</TouchableOpacity>
 	);
 
 	return (
@@ -58,13 +67,13 @@ const ReportScreen = ( {navigation} ) => {
 					style={{ width: 35, height: 35, marginRight: 5, tintColor: '#ffffff'}}
 					source={require('../assets/Icons/title.png')}
 				/>
-				<Text style={{fontWeight: 'bold',fontSize: 35, color: '#ffffff'}}>Laporan</Text>
+				<Text style={{fontWeight: 'bold',fontSize: 35, color: '#ffffff'}}>Pelaporan</Text>
 			</View>
 			<Text style={styles.welcomeText}>Daftar Pelaporan</Text>
 			<SafeAreaView style={styles.newsListContainer}>
 				<FlatList
-					data={DATA}
-					renderItem={({ item }) => <Item title={item.title} />}
+					data={reports}
+					renderItem={({ item }) => <Item id={item.id} desc={item.desc} date={item.date} hour={item.hour} />}
 					keyExtractor={item => item.id}
 				/>
 			</SafeAreaView >

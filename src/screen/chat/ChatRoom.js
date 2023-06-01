@@ -13,38 +13,38 @@ import {
 } from 'react-native';
 
 const ChatRoom = () => {
-  const [messages, setMessages] = useState([]);
-  const [inputText, setInputText] = useState('');
-  const flatListRef = useRef(null);
+	const [messages, setMessages] = useState([]);
+	const [inputText, setInputText] = useState('');
+	const flatListRef = useRef(null);
 
-  const handleSend = () => {
-    if (inputText.trim() === '') return;
+	const handleSend = () => {
+		if (inputText.trim() === '') return;
 
-    const newMessage = {
-      id: messages.length + 1,
-      text: inputText
-    };
+		const newMessage = {
+			id: messages.length + 1,
+			text: inputText
+		};
 
-    setMessages([...messages, newMessage]);
-    setInputText('');
+		setMessages([...messages, newMessage]);
+		setInputText('');
   };
 
   useEffect(() => {
-    // Menambahkan efek samping untuk menscroll ke bagian bawah daftar pesan
-    scrollToBottom();
+		// Menambahkan efek samping untuk menscroll ke bagian bawah daftar pesan
+		scrollToBottom();
   }, [messages]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
-      if (messages.length > 0) {
-        flatListRef.current.scrollToEnd({ animated: true });
-      }
+		if (messages.length > 0) {
+				flatListRef.current.scrollToEnd({ animated: true });
+		}
     }, 100);
   };
 
   const renderItem = ({ item }) => (
     <View style={styles.messageContainer}>
-      <Text style={styles.messageText}>{item.text}</Text>
+      	<Text style={styles.messageText}>{item.text}</Text>
     </View>
   );
 
@@ -55,15 +55,15 @@ const ChatRoom = () => {
 					style={{ width: 35, height: 35, marginRight: 5, tintColor: '#ffffff'}}
 					source={require('../../assets/Icons/title.png')}
 				/>
-				<Text style={{fontWeight: 'bold',fontSize: 35, color: '#ffffff'}}>Chat SOS</Text>
+				<Text style={{fontWeight: 'bold',fontSize: 35, color: '#ffffff'}}>Chat</Text>
 		</View>
         <View style={styles.profileContainer}>
 			<Image
 				style={styles.profileImage}
-				source={require('../../assets/Icons/avatar.png')}
+				source={require('../../assets/Images/sldr.jpg')}
 			/>
 			<View style={styles.profileName}>
-				<Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 20 }}>Ady Santoso</Text>
+				<Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 20 }}>OFFICER NAME</Text>
 				<Text style={{ color: '#00cea6', fontWeight: 'bold', fontSize: 12 }}>Sedang Mengetik ...</Text>
 			</View>
 		</View>
@@ -104,11 +104,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 10,
-        padding: 10
+		paddingTop: 20,
+		paddingLeft: 5
     },
     profileImage: {
-        flex: 1,
-        width: 40,
+        width: 60,
         height: 60,
         borderRadius: 5,
         borderWidth: 2,
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     },
     input: {
         flex: 1,
-        height: 40,
+        height: 50,
         borderWidth: 1,
         borderColor: '#CCCCCC',
         borderRadius: 3,
