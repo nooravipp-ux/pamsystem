@@ -1,17 +1,15 @@
 import React, { useState, useContext, useEffect }  from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, ImageBackground, Alert, PermissionsAndroid } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, TextInput, TouchableOpacity, Text, StyleSheet, ImageBackground, ActivityIndicator} from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import IMEI from 'react-native-imei';
-import { request, PERMISSIONS } from 'react-native-permissions';
 
 const LoginScreen = ({ navigation}) => {
 
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [imei, setImei] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const { setToken, setUserInfo } = useContext(AuthContext);
 
@@ -33,8 +31,10 @@ const LoginScreen = ({ navigation}) => {
                 setToken(JSON.stringify(res.data.response.token));
                 setUserInfo(JSON.stringify(res.data.response.data));
                 navigation.navigate('MainNav', { screen: 'Dashboard' });
+                setIsLoading(false);
             }else{
                 alert(data.message);
+                setIsLoading(false)
             }
         })
         .catch(error => {
@@ -56,16 +56,19 @@ const LoginScreen = ({ navigation}) => {
                     style={styles.input}
                     placeholder='Password'
                     placeholderTextColor='white'
-                    secureTextEntryrepla
+                    secureTextEntry={true}
                     onChangeText={ (text) => setPassword(text)}
                     value={password}
                 />
                 <TouchableOpacity 
                     style={styles.buttonContainer} 
                     // onPress={() => login(username, password, imei)}
-                    onPress={() => handleLogin()}
+                    onPress={() => {
+                        setIsLoading(true)
+                        handleLogin()
+                    }}
                 >
-                    <Text style={styles.buttonText}>LOGIN</Text>
+                    {isLoading ? (<ActivityIndicator size="small" color="#ffff" />) : (<Text style={styles.buttonText}>LOGIN</Text>)}
                 </TouchableOpacity>
             </View>
         </ImageBackground>

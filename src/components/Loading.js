@@ -15,7 +15,7 @@ export const Loading = () => {
                 alignItems: 'center',
                 zIndex: 999999,
             }}>
-            <ActivityIndicator color={'#29352e'} animating={true} size="large" />
+            <ActivityIndicator color={'white'} animating={true} size="large" />
         </View>
     );
 };

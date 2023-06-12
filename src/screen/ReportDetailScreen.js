@@ -3,22 +3,26 @@ import { View, Text, Image, StyleSheet,ScrollView } from 'react-native';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { Loading } from '../components/Loading';
+import moment from 'moment';
+import { BASE_URL, BASE_IMG_URL } from '../config/Config';
 
 const ReportDetailScreen = ({route}) => {
     const { token } = useContext(AuthContext);
     const [report, setReport] = useState(null);
 
-    const [date, setDate] = useState();
-    const [hour, setHour] = useState();
-    const [desc, setDesc] = useState();
-    const [keterangan, setKeterangan] = useState();
-    const [province, setProvince] = useState();
-    const [regency, setRegency] = useState();
-    const [district, setDistrict] = useState();
-    const [village, setVillage] = useState();
+    const [date, setDate] = useState('');
+    const [hour, setHour] = useState('');
+    const [desc, setDesc] = useState('');
+    const [keterangan, setKeterangan] = useState('');
+    const [province, setProvince] = useState('');
+    const [regency, setRegency] = useState('');
+    const [district, setDistrict] = useState('');
+    const [village, setVillage] = useState('');
+	const [files, setFiles] = useState([]);
 
 	useEffect(() => {
 		console.log('Token :', token);
+		console.log('BASE URL :', BASE_IMG_URL);
 
         const { reportId } = route.params;
 
@@ -26,27 +30,25 @@ const ReportDetailScreen = ({route}) => {
 
 		const getReportById = async () => {
 			try {
-				const response = await axios.get(`http://103.176.44.189/pamsystem-api/api/reports/26`, {
+				const response = await axios.get(`${BASE_URL}/reports/${reportId}`, {
 					headers: {
 						Authorization: `Bearer ${JSON.parse(token)}`,
 					},
 				});
 
-                console.log(response.data.response);
+				const data = response.data.response;
+                console.log(data.photos);
 				if(response){
 					setReport(response.data.response);
-
-                    setDate(response.data.response.date);
-                    setHour(response.data.response.hour);
-                    setDesc(response.data.response.desc);
-                    setKeterangan(response.data.response.keterangan);
-                    setProvince(response.data.response.province_id);
-                    setRegency(response.data.response.regency_id);
-                    setDistrict(response.data.response.district_id);
-                    setVillage(response.data.response.village_id);
-
-					console.log('berhasil fetch data: ', report)
-	
+                    setDate(data.date);
+                    setHour(data.hour);
+                    setDesc(data.desc);
+                    setKeterangan(data.keterangan);
+                    setProvince(data.province_name);
+                    setRegency(data.regency_name);
+                    setDistrict(data.district_name);
+                    setVillage(data.village_name);
+					setFiles(data.photos)
 				}else{
 					console.log('gagal fetch data')
 				}
@@ -69,36 +71,42 @@ const ReportDetailScreen = ({route}) => {
 			</View>
 			<Text style={styles.welcomeText}>Lihat Pelaporan</Text>
 			<ScrollView style={styles.newsListContainer}>
-				<View style={{backgroundColor: '#00cea6', flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 30, padding: 5}}>
+				<View style={{backgroundColor: '#006838', flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 30, padding: 5}}>
                     <Text style={{fontSize: 20, color:'#ffffff', fontWeight:'bold', padding: 6}}>PELAPORAN</Text>
                 </View>
                 <View style={{flex: 1, flexDirection: 'row', justifyContent: 'space-between', marginTop: 30, padding: 5}}>
-                    <Text style={{flex: 1, color:'black', fontSize: 10, fontWeight:'bold', padding: 6}}>15 April 2023 | 09:32</Text>
-                    <Text style={{flex:1, color:'black', fontSize: 10, fontWeight:'bold', padding: 6}}>Desa Lombuk, Kec. Tingginambut, KabPuncak Jaya, Papua</Text>
+                    <Text style={{flex: 1, color:'black', fontSize: 10, fontWeight:'bold', padding: 6}}>{moment(date, 'YYYY-MM-DD').format('DD MMMM YYYY')} | {hour.substring(0, 5)}</Text>
+                    <Text style={{flex:1, color:'black', fontSize: 10, fontWeight:'bold', padding: 6, textAlign: 'right'}}>Desa {village}, Kec. {district}, Kab {regency}, {province}</Text>
                 </View>
                 <View style={{flex: 1, marginTop: 25, padding: 5}}>
-                    <Text style={{flex: 1, color:'#ffffff', backgroundColor: '#00cea6', fontSize: 10, fontWeight:'bold', padding: 6}}>URAIAN KEJADIAN</Text>
+                    <Text style={{flex: 1, color:'#ffffff', backgroundColor: '#006838', fontSize: 10, fontWeight:'bold', padding: 6}}>URAIAN KEJADIAN</Text>
                     <Text style={{flex: 1, color:'black', fontSize: 10, padding: 6}}>
-                        Telah terjadi penembakan yang dilakukan oleh anggota KKBpada 2 pengendara objek di Desa Lombok, mengakibatkan salah satunya meninggal dunia.
-                    </Text>
-                    <Text style={{flex: 1, color:'black', fontSize: 10, padding: 6}}>
-                        Saat perjalanan pulang setelah mengantarkan penumpangnya, kedua korban hendak kembali ke Mulia melalui Tingginambut.Lalu di tengah perjalanan mereka dicegatdan di tembak oleh anggota KKB.
+                        {desc}
                     </Text>
                 </View>
 
                 <View style={{flex: 1, marginTop: 25, padding: 5}}>
-                    <Text style={{flex: 1, color:'#ffffff', backgroundColor: '#00cea6', fontSize: 10, fontWeight:'bold', padding: 6}}>KETERANGAN / TINDAKAN</Text>
+                    <Text style={{flex: 1, color:'#ffffff', backgroundColor: '#006838', fontSize: 10, fontWeight:'bold', padding: 6}}>KETERANGAN / TINDAKAN</Text>
                     <Text style={{flex: 1, color:'black', fontSize: 10, padding: 6}}>
-                        Dua korban tersebut yaitu Soleno Lolo (37 Thn) tertembak pada bagian dada saat ini kondisinya masih kritis dan sudah dilarikan ke RSUD Mulia, sedangkan rekannya Sauku Dg Paewa (53 Thn) tertembak di bagian kepala langsung meninggal di tempat dan sedang dilarikan ke rumah duka.
-                    </Text>
-                    <Text style={{flex: 1, color:'black', fontSize: 10, padding: 6}}>
-                        Saat ini anggota kami masih mencari petunjuk melalui saksi di TKP untuk mendalami asal dari kelompok KKB tersebut.
+                        {keterangan}
                     </Text>
                 </View>
 
-                <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10, padding: 5}}>
-                    <Image style={styles.imgContainer} source={require('../assets/Images/banner.jpg')} />
-                    <Image style={styles.imgContainer} source={require('../assets/Images/banner.jpg')} />
+                <View style={{flex: 1, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', marginTop: 10, padding: 5}}>
+					{files?.map((val, index) => {
+						return (
+							<>
+								<Image 
+									key={index.toString()}
+									style={styles.imgContainer} 
+									source={{ uri: `${BASE_IMG_URL}${val.file}`}} 
+								/>
+							</>							
+						)
+					})}
+
+                    
+                    {/* <Image style={styles.imgContainer} source={require('../assets/Images/banner.jpg')} /> */}
                 </View>
 			</ScrollView>
 		</View>
@@ -137,10 +145,11 @@ const styles = StyleSheet.create({
 		padding: 8
 	},
 	imgContainer: {
-		width: 160,
-		height: 160,
-		alignItems: 'stretch',
-        margin: 5
+		width: 330,
+		height: 300,
+		borderRadius: 2,
+		marginBottom: 5
+
 	},
 	newsDescription: {
 		flexDirection: 'row', 

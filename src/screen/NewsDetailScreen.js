@@ -1,31 +1,64 @@
-import React from 'react';
+import React, { useState, useEffect, useContext} from 'react';
 import { View, Text, Image, StyleSheet, SafeAreaView, useWindowDimensions, ScrollView } from 'react-native';
 import RenderHtml from 'react-native-render-html';
+import axios from 'axios';
+import { AuthContext } from '../context/AuthContext';
+import { Loading } from '../components/Loading';
+import moment from 'moment';
+import { BASE_URL, BASE_IMG_URL } from '../config/Config';
 
 
-const NewsDetailScreen = () => {
+const NewsDetailScreen = ({route}) => {
+	const { token } = useContext(AuthContext);
+    const [ news, setNews] = useState(null);
+
+	const [date, setDate] = useState('');
+    const [hour, setHour] = useState('');
+	const [title, setTitle] = useState('');
+    const [desc, setDesc] = useState('');
+	const [files, setFiles] = useState([]);
+
 	const { width } = useWindowDimensions();
-	const source = {
-		html: `
-			<p style="text-align: justify;font-size: 15px;">
-				Pangdam IX / Udayana Mayjen TNI Sony Apriyanto mencanangkan miniatur program binter unggulan TNI AD tahun 2023 <br/><br/>
-				Dalam miniatur program binter unggulan TNI AD yang dicanangkan Pangdam IX / Udayana tersebut diharapkan dapat memberikan dampak nyata kehadiran TNI AD bagi masyarakat Desa Sumili, Kecamatan Kupang 
-				Barat, Kabupaten Kupang <br/><br/>
-				Dalam miniatur program binter unggulan TNI AD yang dicanangkan Pangdam IX / Udayana tersebut diharapkan dapat memberikan dampak nyata kehadiran TNI AD bagi masyarakat Desa Sumili, Kecamatan Kupang 
-				Barat, Kabupaten Kupang<br/><br/>
-				Dalam miniatur program binter unggulan TNI AD yang dicanangkan Pangdam IX / Udayana tersebut diharapkan dapat memberikan dampak nyata kehadiran TNI AD bagi masyarakat Desa Sumili, Kecamatan Kupang 
-				Barat, Kabupaten Kupang<br/><br/>
-				Dalam miniatur program binter unggulan TNI AD yang dicanangkan Pangdam IX / Udayana tersebut diharapkan dapat memberikan dampak nyata kehadiran TNI AD bagi masyarakat Desa Sumili, Kecamatan Kupang 
-				Barat, Kabupaten Kupang<br/><br/>
-				Dalam miniatur program binter unggulan TNI AD yang dicanangkan Pangdam IX / Udayana tersebut diharapkan dapat memberikan dampak nyata kehadiran TNI AD bagi masyarakat Desa Sumili, Kecamatan Kupang 
-				Barat, Kabupaten Kupang
-			</p>
-			`,
+	const newsDesc = {
+		html: `${desc}`,
 	};
 
-	const title = {
-		html: `<h2 style="text-align: justify;"> Bentuk TNI Hadir Untuk Masyarakat, Ini Tujuh Kegiatan Korem 161 / Wira Sakti di Desa Sumili Kabupaten Kupang </h2> `
+	const newsTitle = {
+		html: `${title}`
 	}
+
+	useEffect(() => {
+        const { newsId } = route.params;
+
+        console.log('Report Id :', newsId);
+
+		const getNewsById = async () => {
+			try {
+				const response = await axios.get(`${BASE_URL}/news/${newsId}`, {
+					headers: {
+						Authorization: `Bearer ${JSON.parse(token)}`,
+					},
+				});
+
+				const data = response.data.response;
+                console.log(data.photos);
+				if(response){
+					setNews(response.data.response);
+                    setDate(data.date);
+                    setHour(data.hour);
+                    setDesc(data.desc);
+                    setTitle(data.title);
+					setFiles(data.photos)
+				}else{
+					console.log('gagal fetch data')
+				}
+			} catch (error) {
+				console.error(error);
+			}				
+		}
+
+		getNewsById();
+	}, []);
 
 	return (
 		<View style={styles.container}>
@@ -38,26 +71,29 @@ const NewsDetailScreen = () => {
 			</View>
 			<Text style={styles.welcomeText}>Baca</Text>
 			<ScrollView style={styles.newsListContainer}>
-				<View style={styles.newsContainer}>
-					<View style={{ flex: 3, flexDirection: 'column' }}>
-						<View style={styles.newsDescription}>
-							<Text style={{ flex: 1, color: '#ffffff' }}>05 Mei 2023</Text>
-							<Text style={{ color: '#ffffff'}}>Oleh : Administrator</Text>
-						</View>
-						<RenderHtml
-							contentWidth={width}
-							source={title}
-						/>
-						<Image
-							style={styles.newsImage}
-							source={require('../assets/Images/banner.jpg')}
-						/>
-						<RenderHtml
-							contentWidth={width}
-							source={source}
-						/>
-					</View>
-				</View>
+				<View style={{flex: 1, flexDirection: 'row', justifyContent: 'space-between', marginTop: 5, padding: 5}}>
+                    <Text style={{flex: 1, color:'#ffffff', fontSize: 15, fontWeight:'bold', padding: 6}}>{moment(date, 'YYYY-MM-DD').format('DD MMMM YYYY')}</Text>
+                    <Text style={{flex:1, color:'#ffffff', fontSize: 15, fontWeight:'bold', padding: 6, textAlign: 'right'}}>Oleh : Admin</Text>
+                </View>
+				<View style={{flex: 1, flexDirection: 'row', padding: 5}}>
+                    <Text style={{flex: 1, color:'#ffffff', fontSize: 25, textAlign: 'justify', fontWeight:'bold', padding: 6}}>{title}</Text>
+                </View>
+				<View style={{flex: 1, flexDirection: 'row', marginTop: 10, padding: 6}}>
+					{files?.map((val, index) => {
+						return (
+							<>
+								<Image 
+									key={index.toString()}
+									style={styles.imgContainer} 
+									source={{ uri: `${BASE_IMG_URL}${val.file}`}} 
+								/>
+							</>							
+						)
+					})}
+                </View>
+				<View style={{flex: 1, flexDirection: 'row', marginTop: 5, padding: 5}}>
+                    <Text style={{flex: 1, color:'#ffffff', fontSize: 16, textAlign: 'justify', padding: 6}}>{desc}</Text>
+                </View>
 			</ScrollView>
 		</View>
 	);
@@ -86,7 +122,7 @@ const styles = StyleSheet.create({
 	},
 	newsListContainer: {
 		borderRadius: 3,
-		backgroundColor: '#304038',
+		backgroundColor: '#3e4c42',
 		marginTop: 10,
 		marginBottom: 10,
 	},
@@ -94,10 +130,12 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		padding: 8
 	},
-	newsImage: {
-		width: '100%',
-		height: 250,
-		alignItems: 'stretch'
+	imgContainer: {
+		width: 330,
+		height: 300,
+		borderRadius: 2,
+		marginBottom: 5
+
 	},
 	newsDescription: {
 		flexDirection: 'row', 

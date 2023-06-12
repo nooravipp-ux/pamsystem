@@ -5,6 +5,7 @@ import { DataContext  } from '../context/DataContext';
 import { AuthContext } from '../context/AuthContext';
 import moment from 'moment';
 import axios from 'axios';
+import { BASE_URL, BASE_IMG_URL } from '../config/Config';
 
 const ReportFormStep1 = ( {navigation} ) => {
 
@@ -34,6 +35,8 @@ const ReportFormStep1 = ( {navigation} ) => {
 
 	const [showTimePicker, setShowTimePicker] = useState(false);
 	const [showDatePicker, setShowDatePicker] = useState(false);
+
+	const [searchProvText, setSearchProvText] = useState('');
 
 	const onChangeDate = (event, selectedDate) => {
 		const currentDate = new Date(selectedDate) || date;
@@ -94,7 +97,7 @@ const ReportFormStep1 = ( {navigation} ) => {
 	//Handle Request Data Master
 	const getDataProv = async () => {
 		try {
-			const url = 'http://103.176.44.189/pamsystem-api/api/regional/list/provinces?perPage=20&page=1&search='; // Replace with your API endpoint
+			const url = `${BASE_URL}/regional/list/provinces?perPage=35&page=1&search=`; // Replace with your API endpoint
 		
 			const response = await axios.get(url, {
 				headers: {
@@ -119,7 +122,7 @@ const ReportFormStep1 = ( {navigation} ) => {
 
 	const getDataKab = async () => {
 		try {
-			const url = `http://103.176.44.189/pamsystem-api/api/regional/list/regency/${formData.province_id}?perPage=20&page=1&search=`; // Replace with your API endpoint
+			const url = `${BASE_URL}/regional/list/regency/${formData.province_id}?perPage=20&page=1&search=`; // Replace with your API endpoint
 		
 			const response = await axios.get(url, {
 				headers: {
@@ -144,7 +147,7 @@ const ReportFormStep1 = ( {navigation} ) => {
 
 	const getDataKec = async () => {
 		try {
-			const url = `http://103.176.44.189/pamsystem-api/api/regional/list/district/${formData.regency_id}?perPage=20&page=1&search=`; // Replace with your API endpoint
+			const url = `${BASE_URL}/regional/list/district/${formData.regency_id}?perPage=20&page=1&search=`; // Replace with your API endpoint
 		
 			const response = await axios.get(url, {
 				headers: {
@@ -168,7 +171,7 @@ const ReportFormStep1 = ( {navigation} ) => {
 
 	const getDataKel = async () => {
 		try {
-			const url = `http://103.176.44.189/pamsystem-api/api/regional/list/villages/${formData.district_id}?perPage=20&page=1&search=`; // Replace with your API endpoint
+			const url = `${BASE_URL}/regional/list/villages/${formData.district_id}?perPage=20&page=1&search=`; // Replace with your API endpoint
 		
 			const response = await axios.get(url, {
 				headers: {
@@ -263,6 +266,30 @@ const ReportFormStep1 = ( {navigation} ) => {
 		</View>
 	);
 
+	const validateForm = () => {
+		console.log(formData.province_id)
+		if(formData.date === ""){
+			alert("Data Tanggal tidak boleh kosong !");
+		}else if (formData.hour === "") {
+			alert("Data Waktu tidak boleh kosong !");
+		} else if (formData.province_id === "") {
+			alert("Data Provinsi tidak boleh kosong !");
+		} else if (formData.regency_id === "") {
+			alert("Data Kabupaten / Kota tidak boleh kosong !");
+		} else if (formData.district_id === "") {
+			alert("Data Kecamatan tidak boleh kosong !");
+		} else if (formData.village_id === "") {
+			alert("Data Kelurahan / Desa tidak boleh kosong !");
+		} else {
+			navigation.navigate('ReportFormStep2');
+		}
+	}
+
+	// Filter funtion
+	const filterDataProv = (prov) => {
+		return prov.filter(item => item.toLowerCase().includes(searchProvText.toLowerCase()));
+	};
+
     return(
         <View style={styles.container}>
 			<View style={{flexDirection: 'row', paddingBottom: 5, borderBottomWidth: 1, borderBottomColor: '#adbcb1',}}>
@@ -275,20 +302,20 @@ const ReportFormStep1 = ( {navigation} ) => {
 			<Text style={styles.welcomeText}>Tambah Pelaporan</Text>
 			<View>
 				<Text style={styles.inputLabel}>TANGGAL</Text>
-				<View style={styles.pickerContainer}>
+				<TouchableOpacity onPress={showDatepicker} style={styles.pickerContainer}>
 					<TextInput 
 						style={styles.input}
 						editable={false}
 						value={formattedDate}
 						onChangeText={(text) => setFormattedDate(text)}
 					/>
-					<TouchableOpacity onPress={showDatepicker} style={{padding: 5}}>
+					<View style={{padding: 5}}>
 						<Image
 							onPress={showDatepicker}
 							source={require('../assets/Icons/kalender.png')}
 							style={{ width: 20, height: 20, marginBottom: 17}}
 						/>
-					</TouchableOpacity>
+					</View>
 					{showDatePicker && (
 						<DateTimePicker
 							testID="datePicker"
@@ -298,23 +325,23 @@ const ReportFormStep1 = ( {navigation} ) => {
 							onChange={onChangeDate}
 						/>
 					)} 
-				</View>
+				</TouchableOpacity>
 
 				<Text style={styles.inputLabel}>WAKTU</Text>
-				<View style={styles.pickerContainer}>
+				<TouchableOpacity onPress={showTimepicker} style={styles.pickerContainer}>
 					<TextInput 
 						style={styles.input}
 						editable={false}
 						value={formattedTime}
 						onChangeText={(text) => setFormattedTime(text)}
 					/>
-					<TouchableOpacity onPress={showTimepicker} style={{padding: 5}}>
+					<View style={{padding: 5}}>
 						<Image
 							onPress={showTimepicker}
 							source={require('../assets/Icons/kalender.png')}
 							style={{ width: 20, height: 20, marginBottom: 17}}
 						/>
-					</TouchableOpacity>
+					</View>
 					{showTimePicker && (
 						<DateTimePicker
 							testID="timePicker"
@@ -325,11 +352,16 @@ const ReportFormStep1 = ( {navigation} ) => {
 							onChange={onChangeTime}
 						/>
 					)} 
-				</View>
+				</TouchableOpacity>
 
 				<Text style={styles.inputLabel}>TEMPAT</Text>
 				
-				<View style={styles.pickerContainer}>
+				<TouchableOpacity
+					onPress={() => {
+						setModalProvVisible(true)
+						getDataProv();
+					} } 
+					style={styles.pickerContainer}>
 					<TextInput
 						editable={false} 
 						style={styles.input}
@@ -337,19 +369,20 @@ const ReportFormStep1 = ( {navigation} ) => {
 						value={provText}
 						onChangeText={handleInputProvince}
 					/>
-					<TouchableOpacity
-						onPress={() => {
-							setModalProvVisible(true)
-							getDataProv();
-						} } 
+					<View
 						style={{padding: 5}}>
 						<Image
 							source={require('../assets/Icons/dropdown.png')}
 							style={{ width: 13, height: 13, marginBottom: 17}}
 						/>
-					</TouchableOpacity> 
-				</View>
-				<View style={styles.pickerContainer}>
+					</View> 
+				</TouchableOpacity>
+				<TouchableOpacity
+					onPress={() => {
+						setModalKabVisible(true)
+						getDataKab();
+					}} 
+					style={styles.pickerContainer}>
 					<TextInput
 						editable={false} 
 						style={styles.input}
@@ -357,19 +390,19 @@ const ReportFormStep1 = ( {navigation} ) => {
 						value={kabText}
 						onChangeText={handleInputRegency}
 					/>
-					<TouchableOpacity o
-						onPress={() => {
-							setModalKabVisible(true)
-							getDataKab();
-						}} 
-						style={{padding: 5}}>
+					<View style={{padding: 5}}>
 						<Image
 							source={require('../assets/Icons/dropdown.png')}
 							style={{ width: 13, height: 13, marginBottom: 17}}
 						/>
-					</TouchableOpacity>
-				</View>
-				<View style={styles.pickerContainer}>
+					</View>
+				</TouchableOpacity>
+				<TouchableOpacity
+					onPress={() => {
+						setModalKecVisible(true)
+						getDataKec()
+					}} 
+					style={styles.pickerContainer}>
 					<TextInput
 						editable={false} 
 						style={styles.input}
@@ -377,19 +410,19 @@ const ReportFormStep1 = ( {navigation} ) => {
 						value={kecText}
 						onChangeText={handleInputDistrict}
 					/>
-					<TouchableOpacity 
-						onPress={() => {
-							setModalKecVisible(true)
-							getDataKec()
-						}} 
-						style={{padding: 5}}>
+					<View style={{padding: 5}}>
 						<Image
 							source={require('../assets/Icons/dropdown.png')}
 							style={{ width: 13, height: 13, marginBottom: 17}}
 						/>
-					</TouchableOpacity>
-				</View>
-				<View style={styles.pickerContainer}>
+					</View>
+				</TouchableOpacity>
+				<TouchableOpacity 
+					onPress={() => {
+						setModalKelVisible(true)
+						getDataKel()
+					}}
+					style={styles.pickerContainer}>
 					<TextInput
 						editable={false} 
 						style={styles.input}
@@ -397,19 +430,14 @@ const ReportFormStep1 = ( {navigation} ) => {
 						value={kelText}
 						onChangeText={handleInputVillage}
 					/>
-					<TouchableOpacity 
-						onPress={() => {
-							setModalKelVisible(true)
-							getDataKel()
-						}} 
-						style={{padding: 5}}>
+					<View style={{padding: 5}}>
 						<Image
 							source={require('../assets/Icons/dropdown.png')}
 							style={{ width: 13, height: 13, marginBottom: 17}}
 						/>
-					</TouchableOpacity>
-				</View>
-				<View style={styles.buttonContainer}>
+					</View>
+				</TouchableOpacity>
+				<TouchableOpacity style={styles.buttonContainer}>
 					<TouchableOpacity
 						style={styles.btn}
 							onPress={() => navigation.navigate('ReportScreen')}
@@ -418,11 +446,13 @@ const ReportFormStep1 = ( {navigation} ) => {
 					</TouchableOpacity>
 					<TouchableOpacity
 						style={styles.btn}
-							onPress={() => navigation.navigate('ReportFormStep2')}
+							onPress={() => {
+								validateForm()
+							}}
 						>
 						<Text style={styles.buttonText}>LANJUT</Text>
 					</TouchableOpacity>
-            	</View>
+            	</TouchableOpacity>
 				<View style={{marginTop: 20}}>
 					<View style={styles.centeredView}>
 						<Modal
@@ -435,7 +465,12 @@ const ReportFormStep1 = ( {navigation} ) => {
 							}}>
 							<View style={styles.centeredView}>
 								<View style={styles.modalView}>
-									<Text style={styles.modalText}>Cari Provinsi</Text>
+									<TextInput
+										style={styles.searchInput}
+										value={searchProvText}
+										placeholder="Cari Provinsi"
+										onChangeText={ (text) => {setSearchProvText(text)}}
+									/>
 									<SafeAreaView style={styles.newsListContainer}>
 										<FlatList
 											data={prov}
@@ -466,7 +501,7 @@ const ReportFormStep1 = ( {navigation} ) => {
 										<FlatList
 											data={kab}
 											renderItem={({ item }) => <ItemKab id={item.code} title={item.name} />}
-											keyExtractor={item => item.code}
+											keyExtractor={item => item.id}
 										/>
 									</SafeAreaView >
 								</View>
@@ -597,6 +632,16 @@ const styles = StyleSheet.create({
 		color: 'white',
 		marginBottom: 20
     },
+	searchInput: {
+		width: '100%',
+		flex: 1,
+		borderBottomWidth: 1,
+		borderColor: 'black',
+		height: 40,
+		color: 'black',
+		marginBottom: 20,
+		marginTop: 20
+	},
 	pickerContainer: {
 		flexDirection: 'row', 
 		alignItems: 'center' 

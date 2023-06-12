@@ -1,41 +1,66 @@
 import React, { useEffect, useContext, useState } from 'react';
-import { View, Text, FlatList, Image, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, Image, StyleSheet, SafeAreaView, TouchableOpacity, RefreshControl } from 'react-native';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import moment from 'moment';
+import { BASE_URL, BASE_IMG_URL } from '../config/Config';
+import { ReportContext } from '../context/ReportContext';
 
 const ReportScreen = ( {navigation} ) => {
 	const { token } = useContext(AuthContext);
-	const { userInfo } = useContext(AuthContext);
-
-	const [reports, setReports] = useState(null);
+	const { reports, setReports } = useContext(ReportContext);
+	const [ refreshing, setRefreshing]  = useState(false);
 
 	useEffect(() => {
-		const user = JSON.parse(userInfo);
-		console.log('Token :', token);
-		const getReports = async () => {
-			try {
-				const response = await axios.get('http://103.176.44.189/pamsystem-api/api/reports?perPage=100&page=1&search=', {
-					headers: {
-						Authorization: `Bearer ${JSON.parse(token)}`,
-					},
-				});
-
-				if(response){
-					setReports(response.data.response.data);
-					console.log('berhasil fetch data: ', reports)
-	
-				}else{
-					console.log('gagal fetch data')
-				}
-			} catch (error) {
-				console.error(error);
-			}				
-		}
-
+		const interval = setInterval(() => {
+			handleRefresh();
+		}, 20000);	
 		getReports();
+		return() => {
+			clearInterval(interval);
+		}
 	}, []);
 
-	const Item = ({ id, desc, date , hour}) => (
+	const getReports = async () => {
+		try {
+			const response = await axios.get(`${BASE_URL}/reports?perPage=50&page=1&search=&orderBy=created_at&sortBy=desc`, {
+				headers: {
+					Authorization: `Bearer ${JSON.parse(token)}`,
+				},
+			});
+
+			const data = response.data.response.data;
+			// console.log('Length from context: ',reports.length);
+			// console.log('Length from Request: ',data.length);
+			if(response){
+				setReports(data);
+				// console.log('berhasil fetch data: ', reports)
+				// console.log('Terjadi Perubahan Data');
+				setRefreshing(false);
+
+			}else{
+				console.log('gagal fetch data')
+			}
+		} catch (error) {
+			console.error(error);
+		// } finally {
+		// 	getReports();
+		}
+	}
+
+	const handleRefresh = () => {
+
+		console.log('Refresh triggred !!')
+		if (refreshing) return;
+	  
+		setRefreshing(true);
+	  
+		// Perform data fetching or any asynchronous operation
+		getReports();
+		
+	 };
+
+	const Item = ({ id, desc, date , hour, image}) => (
 		<TouchableOpacity 
 			style={styles.newsContainer}
 			onPress={() => {
@@ -44,17 +69,24 @@ const ReportScreen = ( {navigation} ) => {
 				})}
 			}
 		>
-			<Image
-				style={styles.newsImage}
-				source={require('../assets/Images/banner.jpg')}
-			/>
+			{image !== undefined ? 
+				<Image
+					style={styles.newsImage}
+					source={{ uri: `${BASE_IMG_URL}${image.file}` }}
+				/>
+				:
+				<Image
+					style={styles.newsImage}
+					source={require('../assets/Icons/kamera.png')}
+				/>
+			}
 			<View style={{ flex:3, flexDirection: 'column' }}>
 				<View style={styles.newsDescription}>
-					<Text style={{ flex: 1, color: '#ffffff' }}>{date}</Text>
-						<Text style={{ color: '#ffffff'}}>{hour}</Text>
+					<Text style={{ flex: 1, color: '#ffffff' }}>{moment(date, 'YYYY-MM-DD').format('DD MMMM YYYY')}</Text>
+						<Text style={{ color: '#ffffff'}}>{hour.substring(0, 5)}</Text>
 					</View>
 					<View style={styles.newsTitle}>
-						<Text style={{ flex: 1, color: '#ffffff', fontWeight: 'bold', textAlign: 'left' }}>{desc}</Text>
+						<Text style={{ flex: 1, color: '#ffffff', fontWeight: 'bold', textAlign: 'left' }}>{desc.substring(0, 120)} ... </Text>
 					</View>
 			</View>
 		</TouchableOpacity>
@@ -71,10 +103,14 @@ const ReportScreen = ( {navigation} ) => {
 			</View>
 			<Text style={styles.welcomeText}>Daftar Pelaporan</Text>
 			<SafeAreaView style={styles.newsListContainer}>
+			{/* <Loading /> */}
 				<FlatList
 					data={reports}
-					renderItem={({ item }) => <Item id={item.id} desc={item.desc} date={item.date} hour={item.hour} />}
+					renderItem={({ item }) => <Item id={item.id} desc={item.desc} date={item.date} hour={item.hour} image={item.photos[0]} />}
 					keyExtractor={item => item.id}
+					refreshControl={
+						<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+					}
 				/>
 			</SafeAreaView >
 			<TouchableOpacity 
@@ -121,6 +157,8 @@ const styles = StyleSheet.create({
 		padding: 8,
 		borderTopWidth: 1,
 		borderTopColor: '#adbcb1',
+		borderBottomWidth: 1,
+		borderBottomColor: '#adbcb1',
 	},
 	newsImage: {
 		flex: 1,

@@ -13,7 +13,7 @@ const ChatNav = () => {
             initialRouteName="NewsScreen"
             screenOptions={{ headerShown: false}}
         >
-            <ChatStack.Screen name="ChatList" component={ChatList} />
+            {/* <ChatStack.Screen name="ChatList" component={ChatList} /> */}
             <ChatStack.Screen name="ChatRoom" component={ChatRoom} />
         </ChatStack.Navigator>
     );

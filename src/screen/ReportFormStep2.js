@@ -13,6 +13,16 @@ const ReportFormStep2 = ( {navigation} ) => {
 		updateFormData({ keterangan: value });
 	};
 
+	const validateForm = () => {
+		if(formData.desc === ""){
+			alert("Data Uraian Kejadian tidak boleh kosong !");
+		} else if (formData.keterangan === "") {
+			alert("Data Keterangan / Tindakan tidak boleh kosong !");
+		} else {
+			navigation.navigate('ReportFormStep3')
+		}
+	}
+
     return(
         <SafeAreaView style={styles.container}>
 			<View style={{flexDirection: 'row', paddingBottom: 5, borderBottomWidth: 1, borderBottomColor: '#adbcb1',}}>
@@ -56,7 +66,9 @@ const ReportFormStep2 = ( {navigation} ) => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.btn}
-                  onPress={() => navigation.navigate('ReportFormStep3')}
+                  onPress={() => {
+					validateForm();
+				  }}
                 >
                   <Text style={styles.buttonText}>LANJUT</Text>
                 </TouchableOpacity>

@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,23 +14,36 @@ import {
 import { Loading } from '../components/Loading';
 import { DataContext  } from '../context/DataContext';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import Geolocation from '@react-native-community/geolocation';
+import DocumentPicker from 'react-native-document-picker';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { BASE_URL } from '../config/Config';
 
 function ReportFormStep3({ navigation }) {
-	const [imageCamera, setImageCamera] = useState(null);
-	const [imageGalery, setImageGalery] = useState(null);
+	
+	const [imageCamera, setImageCamera] = useState([]);
+	const [imageGalery, setImageGalery] = useState([]);
+	const [files, setFiles] = useState([]);
+
+	const [lat, setLat] = useState('');
+	const [long, setLong] = useState('');
 
 	const { token } = useContext(AuthContext);
 
 	const [isLoading, setIsLoading] = useState(false);
 	const [isModalVisible, setIsModalVisible] = useState(false);
 	const [isModalSuccessVisible, setIsModalSuccessVisible] = useState(false);
+	const [isModalUploadOptionVisible, setIsModalUploadOptionVisible] = useState(false);
 
 	const { formData, updateFormData } = useContext(DataContext);
 
 	const { userInfo } = useContext(AuthContext);
 	const user = JSON.parse(userInfo);
+
+	useEffect(() => {
+		getGeolocation();
+	});
 
 	const handleImgCamera = (value1, value2, value3) => {
 		updateFormData({ file: value1 });
@@ -94,7 +107,7 @@ function ReportFormStep3({ navigation }) {
 	const captureImage = async () => {
 		let options = {
 			mediaType: 'photo', 
-			quality: 1,
+			quality: 0.5,
 		};
 		
 		let isCameraPermitted = await requestCameraPermission();
@@ -116,10 +129,14 @@ function ReportFormStep3({ navigation }) {
 					alert(response.errorMessage);
 				    return;
 				} else {
-					const data = response.assets[0];
-					console.log(data)
-					setImageCamera(data);
-					handleImgCamera(response.assets, user.id, user.id)
+					const data = response.assets;
+					if(data[0].fileSize < 2000000){
+						setImageCamera((prevSelectedImages) => prevSelectedImages.concat(data));
+						// handleImgCamera(response.assets, user.id, user.id)
+					}else{
+						// setImageCamera(null);
+						alert('Foto / Gambar harus kurang atau sama dengan 2 MB !')
+					}
 				}
 			});
 		}
@@ -128,16 +145,17 @@ function ReportFormStep3({ navigation }) {
 	function openGalery() {
 		let options = {
 			mediaType: 'photo', 
-			quality: 1
+			quality: 0.5,
+			multiple: true,
 		};
 
 		launchImageLibrary(options, (response) => {
-			console.log('Response = ', response);
+			console.log('Response = ', response.assets[0]);
 	
 			if (response.didCancel) {
 				alert('User cancelled camera picker');
 				return;
-			}if (response.errorCode == 'camera_unavailable') {
+			} else if (response.errorCode == 'camera_unavailable') {
 				alert('Camera not available on device');
 				return;
 			} else if (response.errorCode == 'permission') {
@@ -147,15 +165,38 @@ function ReportFormStep3({ navigation }) {
 				alert(response.errorMessage);
 				return;
 			} else {
-				const data = response.assets[0];
-				setImageGalery(data, formData.user_id, formData.kodam_id);
-				console.log(data);
+				const data = response.assets;
+					if(data[0].fileSize < 2000000){
+						setImageCamera((prevSelectedImages) => prevSelectedImages.concat(data));
+						// handleImgCamera(response.assets, user.id, user.id)
+					}else{
+						// setImageCamera(null);
+						alert('Foto / Gambar harus kurang atau sama dengan 2 MB !')
+					}
 			}
 		});
 	}
 
+	const  pickDocument = async () => {
+		let isDocumentPermitted = await requestExternalWritePermission();
+		try {
+			const res = await DocumentPicker.pick({
+				type: [DocumentPicker.types.pdf],
+				allowMultiSelection: true,
+			})
+			setFiles((prevSelectedFile) => prevSelectedFile.concat(res));
+
+			// console.log(files)
+		} catch(error) {
+			console.log(error)
+		}
+		console.log('Files Uploaded :', files);
+
+	} 
+	
 	const handlePressSubmit = () => {
-		setIsModalVisible(true);
+		// console.log(files)
+		validateForm();
 	};
 	
 	const handleCancel = () => {
@@ -168,8 +209,30 @@ function ReportFormStep3({ navigation }) {
 		postData();
 	};
 
+	const getGeolocation =  async () => {
+		try {
+			const granted = await PermissionsAndroid.request(
+				PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+			);
+
+			if(granted === PermissionsAndroid.RESULTS.GRANTED) {
+				Geolocation.getCurrentPosition( info => {
+					setLat(info.coords.latitude);
+					setLong(info.coords.longitude);
+				});
+			} else {
+				console.log('Permissiion di tolak');
+			}
+
+		} catch (error) {
+			console.log(error);
+		}
+	}
+
 	const postData = async () => {
 		try {
+			updateFormData({ user_id: user.id });
+			updateFormData({ kodam_id: user.id });
 
 			let uploadData = new FormData();
             Object.keys(formData).forEach(element => {
@@ -177,15 +240,42 @@ function ReportFormStep3({ navigation }) {
                     uploadData.append(element, formData[element]);
                 }
             });
+
+			uploadData.append("lat", lat);
+			uploadData.append("long", long);
 			
-            uploadData.append("file", {
-                uri: imageCamera.uri,
-                type: imageCamera.type,
-                name: imageCamera.fileName
-            });
+			let mergedFiles = [];
+
+			Object.values(files).forEach((val) => {
+				mergedFiles.push({
+					uri: val.uri,
+					type: val.type,
+					name: val.name,
+				})
+			});
+
+			let mergedImages = [];
+
+			Object.values(imageCamera).forEach((val) => {
+				mergedImages.push({
+					uri: val.uri,
+					type: val.type,
+					name: val.fileName,
+				})
+			});
+			
+			let mergedFilesToUpload = [...mergedFiles, ...mergedImages];
+
+			console.log('Files : ', mergedFiles);
+			console.log('Images : ', mergedImages);
+
+			console.log("files to Upload : ", mergedFilesToUpload);
+
+			uploadData.append("file", mergedFilesToUpload);
+
             console.log(uploadData);
 
-			const response = await axios.post('http://103.176.44.189/pamsystem-api/api/reports/insert', uploadData, {
+			const response = await axios.post(`${BASE_URL}/reports/insert`, uploadData, {
 				headers: {
 					"Content-Type" : "multipart/form-data",
 					Authorization: `Bearer ${JSON.parse(token)}`,
@@ -284,6 +374,50 @@ function ReportFormStep3({ navigation }) {
 			</Modal>
 		);
 	}
+	
+	const UploadOptionModal = ({ visible, onCancel, onConfirm }) => {
+		return (
+		  <Modal
+			visible={visible}
+			animationType="fade"
+			transparent={true}
+			onRequestClose={onCancel}
+		  >
+			<View style={styles.modalContainer}>
+			  <View style={styles.modalContent}>
+				<Text style={{color: 'black', fontWeight: '700', fontSize: 16}}>Pilih Jenis File </Text>
+				<View style={{}}>
+					{isLoading ? (
+						<Loading />
+					) : (
+						<></>
+					)}
+					<TouchableOpacity
+						style={{backgroundColor: '#00cea6', paddingVertical: 17, marginTop: 30, marginBottom: 10}}
+						onPress={handleConfirm}
+					>
+					<Text style={styles.buttonText}>SIMPAN & KIRIM</Text>
+					</TouchableOpacity>
+					<TouchableOpacity
+						style={{borderWidth: 1, borderColor: '#00cea6', paddingVertical: 17}}
+						onPress={handleCancel}
+					>
+					<Text style={{color: 'black', textAlign: 'center'}}>KEMBALI</Text>
+					</TouchableOpacity>
+				</View>
+			  </View>
+			</View>
+		  </Modal>
+		);
+	};
+
+	const validateForm = () => {
+		if(imageCamera === null){
+			alert("Data Foto / Gambar Harus di Isi !");
+		} else {
+			setIsModalVisible(true);
+		}
+	}
 
     return (
         <SafeAreaView  style={styles.container}>
@@ -310,26 +444,41 @@ function ReportFormStep3({ navigation }) {
 				>
 					<Text style={styles.buttonText}>AMBIL DATA DARI PONSEL</Text>
 				</TouchableOpacity>
-				<View style={styles.imgContainer}>
-					{imageCamera !== null ? (
-						<>
-							<Image
-								source={{ uri:imageCamera.uri }}
-								style={styles.profileImage}
-							/>
-						</>
-						) : (
-						<>
-							<Image
-								source={require('../assets/Icons/avatar.png')}
-								style={styles.profileImage}
-							/>
-						</>
-					)}
+
+				<TouchableOpacity 
+					onPress={ () => pickDocument() }
+					style={styles.btnPicker}
+				>
+					<Text style={styles.buttonText}>AMBIL DATA FILE</Text>
+				</TouchableOpacity>
+				<Text style={styles.inputLabel}>FOTO UPLOADED:</Text>
+				<ScrollView style={styles.imgContainer} horizontal={true}>
+				{
+					imageCamera.map((image) => {
+						return (
+							<Image source={{ uri:image.uri }} style={styles.profileImage} />
+							);
+						})
+				}
+				</ScrollView>
+				<Text style={styles.inputLabel}>FILE UPLOADED:</Text>
+				<View>
+					{files?.map((val, index) => {
+						return (
+							<>
+								<Text key={index}>{val.name}</Text>
+							</>
+						)
+					})}
 				</View>
 			</ScrollView>
 			<ConfirmationModal
 				visible={isModalVisible}
+				onCancel={handleCancel}
+				onConfirm={handleConfirm}
+			/>
+			<UploadOptionModal
+				visible={isModalUploadOptionVisible}
 				onCancel={handleCancel}
 				onConfirm={handleConfirm}
 			/>
@@ -342,7 +491,10 @@ function ReportFormStep3({ navigation }) {
             <View style={styles.btnContainer}>
 				<TouchableOpacity
                   style={styles.btn}
-                  onPress={() => navigation.navigate('ReportScreen')}
+                  onPress={() => {
+					cleanFormData();
+					navigation.navigate('ReportScreen')
+				  }}
                 >
                   <Text style={styles.buttonText}>BATAL</Text>
                 </TouchableOpacity>
@@ -420,19 +572,20 @@ const styles = StyleSheet.create({
 	},
 	imgContainer: {
 		flex: 1,
-		flexDirection: 'column',
-		justifyContent: 'center',
-		alignItems: 'center'
+		flexDirection: 'row',
+		marginTop: 20,
+		paddingBottom: 20
 	},
 	profileImage: {
-		width: 400,
-		height: 400,
+		width: 100,
+		height: 100,
 		borderRadius: 5,
 		borderWidth: 2,
 		marginRight: 8,
 	},
 	modalContainer: {
 		flex: 1,
+		width: '100%',
 		justifyContent: 'center',
 		alignItems: 'center',
 		backgroundColor: 'rgba(0, 0, 0, 0.5)',

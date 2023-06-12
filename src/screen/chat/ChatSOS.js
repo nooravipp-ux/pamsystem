@@ -63,7 +63,7 @@ const ChatSOS = () => {
 				source={require('../../assets/Images/sldr.jpg')}
 			/>
 			<View style={styles.profileName}>
-				<Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 20 }}>Ady Santoso</Text>
+				<Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 20 }}>OFFICER NAME</Text>
 				<Text style={{ color: '#00cea6', fontWeight: 'bold', fontSize: 12 }}>Sedang Mengetik ...</Text>
 			</View>
 		</View>

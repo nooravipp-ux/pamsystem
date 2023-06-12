@@ -19,7 +19,7 @@ export const AuthProvider = ({children}) => {
         .then(res => {
             console.log(res.data);
             let userInfo = AsyncStorage.setItem('userInfo', JSON.stringify(res.data.response.data));
-            let userToken = AsyncStorage.setItem('token', JSON.stringify(res.data.response.token));
+            let token = AsyncStorage.setItem('token', JSON.stringify(res.data.response.token));
 
             if( res.data.status == 200 ){
                 setToken(token);
@@ -31,8 +31,6 @@ export const AuthProvider = ({children}) => {
         .catch(e => {
             console.log(`Login error : ${e}`);
         })
-        // setUserToken('uidiusdiusd');
-        
     }
 
     const logout = () => {
