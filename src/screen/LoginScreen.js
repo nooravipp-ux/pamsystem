@@ -1,8 +1,9 @@
-import React, { useState, useContext, useEffect }  from 'react';
+import React, { useState, useContext }  from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, ImageBackground, ActivityIndicator} from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { BASE_URL } from '../config/Config';
 
 const LoginScreen = ({ navigation}) => {
 
@@ -18,7 +19,7 @@ const LoginScreen = ({ navigation}) => {
     });
 
     const handleLogin = async () => {
-		await axios.post('http://103.176.44.189/pamsystem-api/api/authentication/login', {
+		await axios.post(`${BASE_URL}/authentication/login`, {
             username: username,
             password: password,
             imei: imei,

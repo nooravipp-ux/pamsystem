@@ -5,17 +5,19 @@ import {
     Image,
     Text,
     TouchableOpacity,
-    PermissionsAndroid
+    PermissionsAndroid,
+	ActivityIndicator
 } from 'react-native'; 
 import { BASE_URL } from '../../config/Config';
 import { AuthContext } from '../../context/AuthContext';
 import { launchCamera } from 'react-native-image-picker';
-import Exif from 'react-native-exif';
 import axios from 'axios';
 
 const ProfileScreen = ({navigation}) => {
     const [imageCamera, setImageCamera] = useState(null);
 	const { token, setUserInfo, userInfo } = useContext(AuthContext);
+
+	const [isLoading, setIsLoading] = useState(false);
 
 	const user = JSON.parse(userInfo);
 
@@ -41,6 +43,10 @@ const ProfileScreen = ({navigation}) => {
 		let options = {
 			mediaType: 'photo', 
 			quality: 0.5,
+			cameraType: 'front',
+			cropping: true,
+			cropperCircleOverlay: false,
+			includeExif: true,
 		};
 		
 		let isCameraPermitted = await requestCameraPermission();
@@ -71,19 +77,6 @@ const ProfileScreen = ({navigation}) => {
 			});
 		}
 	};
-
-	const fixImageOrientation = async (imageUri) => {
-		try {
-			const exifData = await Exif.getExif(imageUri);
-			const orientation = exifData.orientation;
-			const fixedImageUri = await Exif.rotate(imageUri, orientation);
-
-			return fixedImageUri;
-		} catch(error) {
-			console.log('Error', error)
-			return imageUri;
-		}
-	}
 
 	const updateProfile = async () => {
 		let payload = new FormData();

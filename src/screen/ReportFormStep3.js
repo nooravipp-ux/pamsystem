@@ -101,6 +101,7 @@ function ReportFormStep3({ navigation }) {
 			mediaType: 'photo', 
 			quality: 0.5,
 			includeExtra: true,
+			cameraType: 'back',
 		};
 		
 		let isCameraPermitted = await requestCameraPermission();
