@@ -18,15 +18,6 @@ const NewsDetailScreen = ({route}) => {
     const [desc, setDesc] = useState('');
 	const [files, setFiles] = useState([]);
 
-	const { width } = useWindowDimensions();
-	const newsDesc = {
-		html: `${desc}`,
-	};
-
-	const newsTitle = {
-		html: `${title}`
-	}
-
 	useEffect(() => {
         const { newsId } = route.params;
 
@@ -81,13 +72,11 @@ const NewsDetailScreen = ({route}) => {
 				<View style={{flex: 1, flexDirection: 'row', marginTop: 10, padding: 6}}>
 					{files?.map((val, index) => {
 						return (
-							<>
 								<Image 
 									key={index.toString()}
 									style={styles.imgContainer} 
 									source={{ uri: `${BASE_IMG_URL}${val.file}`}} 
-								/>
-							</>							
+								/>						
 						)
 					})}
                 </View>

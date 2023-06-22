@@ -21,9 +21,7 @@ import { AuthContext } from '../context/AuthContext';
 import { BASE_URL } from '../config/Config';
 
 function ReportFormStep3({ navigation }) {
-	
 	const [imageCamera, setImageCamera] = useState([]);
-	const [imageGalery, setImageGalery] = useState([]);
 	const [files, setFiles] = useState([]);
 
 	const [lat, setLat] = useState('');
@@ -33,8 +31,8 @@ function ReportFormStep3({ navigation }) {
 
 	const [isLoading, setIsLoading] = useState(false);
 	const [isModalVisible, setIsModalVisible] = useState(false);
+	const [isModalCancelVisible, setIsModalCancelVisible] = useState(false);
 	const [isModalSuccessVisible, setIsModalSuccessVisible] = useState(false);
-	const [isModalUploadOptionVisible, setIsModalUploadOptionVisible] = useState(false);
 
 	const { formData, updateFormData } = useContext(DataContext);
 
@@ -44,12 +42,6 @@ function ReportFormStep3({ navigation }) {
 	useEffect(() => {
 		getGeolocation();
 	});
-
-	const handleImgCamera = (value1, value2, value3) => {
-		updateFormData({ file: value1 });
-		updateFormData({ user_id: value2 });
-		updateFormData({ kodam_id: value3 });
-	};
 
 	const cleanFormData = () => {
 		updateFormData({ date: "" });
@@ -108,6 +100,7 @@ function ReportFormStep3({ navigation }) {
 		let options = {
 			mediaType: 'photo', 
 			quality: 0.5,
+			includeExtra: true,
 		};
 		
 		let isCameraPermitted = await requestCameraPermission();
@@ -115,9 +108,7 @@ function ReportFormStep3({ navigation }) {
 		if (isCameraPermitted) {
 			launchCamera(options, (response) => {
 				// console.log('Response = ', response);
-		
 				if (response.didCancel) {
-					alert('User cancelled camera picker');
 					return;
 				} else if (response.errorCode == 'camera_unavailable') {
 					alert('Camera not available on device');
@@ -132,7 +123,6 @@ function ReportFormStep3({ navigation }) {
 					const data = response.assets;
 					if(data[0].fileSize < 2000000){
 						setImageCamera((prevSelectedImages) => prevSelectedImages.concat(data));
-						// handleImgCamera(response.assets, user.id, user.id)
 					}else{
 						// setImageCamera(null);
 						alert('Foto / Gambar harus kurang atau sama dengan 2 MB !')
@@ -150,10 +140,8 @@ function ReportFormStep3({ navigation }) {
 		};
 
 		launchImageLibrary(options, (response) => {
-			console.log('Response = ', response.assets[0]);
 	
 			if (response.didCancel) {
-				alert('User cancelled camera picker');
 				return;
 			} else if (response.errorCode == 'camera_unavailable') {
 				alert('Camera not available on device');
@@ -168,7 +156,6 @@ function ReportFormStep3({ navigation }) {
 				const data = response.assets;
 					if(data[0].fileSize < 2000000){
 						setImageCamera((prevSelectedImages) => prevSelectedImages.concat(data));
-						// handleImgCamera(response.assets, user.id, user.id)
 					}else{
 						// setImageCamera(null);
 						alert('Foto / Gambar harus kurang atau sama dengan 2 MB !')
@@ -191,23 +178,42 @@ function ReportFormStep3({ navigation }) {
 			console.log(error)
 		}
 		console.log('Files Uploaded :', files);
-
 	} 
 	
 	const handlePressSubmit = () => {
-		// console.log(files)
 		validateForm();
 	};
 	
 	const handleCancel = () => {
 		setIsModalVisible(false);
 	};
-	
+
 	const handleConfirm = () => {
 		console.log(formData)
 		setIsLoading(true);
 		postData();
 	};
+
+	const handleCancelButton = () => {
+		setIsModalCancelVisible(true);
+	};
+
+	const handleCancelButtonConfirm = () => {
+		setIsModalCancelVisible(false);
+	};
+
+	const handleCancelConfirm = () => {
+		cleanFormData();
+		navigation.navigate('ReportScreen')
+	}
+	
+	const validateForm = () => {
+		if(imageCamera.length === 0){
+			alert("Data Foto Harus di Isi !");
+		} else {
+			setIsModalVisible(true);
+		}
+	}
 
 	const getGeolocation =  async () => {
 		try {
@@ -266,12 +272,11 @@ function ReportFormStep3({ navigation }) {
 			
 			let mergedFilesToUpload = [...mergedFiles, ...mergedImages];
 
-			console.log('Files : ', mergedFiles);
-			console.log('Images : ', mergedImages);
-
 			console.log("files to Upload : ", mergedFilesToUpload);
 
-			uploadData.append("file", mergedFilesToUpload);
+			mergedFilesToUpload.map((val) => {
+				uploadData.append("file[]", val);
+			})
 
             console.log(uploadData);
 
@@ -328,11 +333,44 @@ function ReportFormStep3({ navigation }) {
 						style={{backgroundColor: '#00cea6', paddingVertical: 17, marginTop: 30, marginBottom: 10}}
 						onPress={handleConfirm}
 					>
-					<Text style={styles.buttonText}>SIMPAN & KIRIM</Text>
+						<Text style={styles.buttonText}>SIMPAN & KIRIM</Text>
 					</TouchableOpacity>
 					<TouchableOpacity
 						style={{borderWidth: 1, borderColor: '#00cea6', paddingVertical: 17}}
 						onPress={handleCancel}
+					>
+						<Text style={{color: 'black', textAlign: 'center'}}>KEMBALI</Text>
+					</TouchableOpacity>
+				</View>
+			  </View>
+			</View>
+		  </Modal>
+		);
+	};
+
+	const CancelModal = ({ visible, onCancel, onConfirm }) => {
+		return (
+		  <Modal
+			visible={visible}
+			animationType="fade"
+			transparent={true}
+			onRequestClose={onCancel}
+		  >
+			<View style={styles.modalContainer}>
+			  <View style={styles.modalContent}>
+				<Text style={{color: 'black', fontWeight: '700', fontSize: 16}}>Apakah Anda Yakin Untuk Membatalkan Laporan ?</Text>
+				<View style={{}}>
+					<TouchableOpacity
+						style={{backgroundColor: '#00cea6', paddingVertical: 17, marginTop: 30, marginBottom: 10}}
+						onPress={() => {
+							handleCancelConfirm();
+						}}
+					>
+					<Text style={styles.buttonText}>BATALKAN PELAPORAN</Text>
+					</TouchableOpacity>
+					<TouchableOpacity
+						style={{borderWidth: 1, borderColor: '#00cea6', paddingVertical: 17}}
+						onPress={handleCancelButtonConfirm}
 					>
 					<Text style={{color: 'black', textAlign: 'center'}}>KEMBALI</Text>
 					</TouchableOpacity>
@@ -375,50 +413,6 @@ function ReportFormStep3({ navigation }) {
 		);
 	}
 	
-	const UploadOptionModal = ({ visible, onCancel, onConfirm }) => {
-		return (
-		  <Modal
-			visible={visible}
-			animationType="fade"
-			transparent={true}
-			onRequestClose={onCancel}
-		  >
-			<View style={styles.modalContainer}>
-			  <View style={styles.modalContent}>
-				<Text style={{color: 'black', fontWeight: '700', fontSize: 16}}>Pilih Jenis File </Text>
-				<View style={{}}>
-					{isLoading ? (
-						<Loading />
-					) : (
-						<></>
-					)}
-					<TouchableOpacity
-						style={{backgroundColor: '#00cea6', paddingVertical: 17, marginTop: 30, marginBottom: 10}}
-						onPress={handleConfirm}
-					>
-					<Text style={styles.buttonText}>SIMPAN & KIRIM</Text>
-					</TouchableOpacity>
-					<TouchableOpacity
-						style={{borderWidth: 1, borderColor: '#00cea6', paddingVertical: 17}}
-						onPress={handleCancel}
-					>
-					<Text style={{color: 'black', textAlign: 'center'}}>KEMBALI</Text>
-					</TouchableOpacity>
-				</View>
-			  </View>
-			</View>
-		  </Modal>
-		);
-	};
-
-	const validateForm = () => {
-		if(imageCamera === null){
-			alert("Data Foto / Gambar Harus di Isi !");
-		} else {
-			setIsModalVisible(true);
-		}
-	}
-
     return (
         <SafeAreaView  style={styles.container}>
             <View style={{flexDirection: 'row', paddingBottom: 5, borderBottomWidth: 1, borderBottomColor: '#adbcb1',}}>
@@ -451,23 +445,21 @@ function ReportFormStep3({ navigation }) {
 				>
 					<Text style={styles.buttonText}>AMBIL DATA FILE</Text>
 				</TouchableOpacity>
-				<Text style={styles.inputLabel}>FOTO UPLOADED:</Text>
+				<Text style={styles.inputLabel}>LAMPIRAN FOTO :</Text>
 				<ScrollView style={styles.imgContainer} horizontal={true}>
 				{
-					imageCamera.map((image) => {
+					imageCamera.map((image, index) => {
 						return (
-							<Image source={{ uri:image.uri }} style={styles.profileImage} />
+							<Image key={index} source={{ uri:image.uri }} style={styles.profileImage} />
 							);
 						})
 				}
 				</ScrollView>
-				<Text style={styles.inputLabel}>FILE UPLOADED:</Text>
+				<Text style={styles.inputLabel}>LAMPIRAN DOKUMEN :</Text>
 				<View>
 					{files?.map((val, index) => {
 						return (
-							<>
-								<Text key={index}>{val.name}</Text>
-							</>
+							<Text key={index}>{val.name}</Text>
 						)
 					})}
 				</View>
@@ -477,36 +469,37 @@ function ReportFormStep3({ navigation }) {
 				onCancel={handleCancel}
 				onConfirm={handleConfirm}
 			/>
-			<UploadOptionModal
-				visible={isModalUploadOptionVisible}
-				onCancel={handleCancel}
-				onConfirm={handleConfirm}
-			/>
 			<SuccessModal 
 				visible={isModalSuccessVisible}
 				onCancel={handleCancel}
 				onConfirm={handleConfirm}
 			/>
+			<CancelModal
+				visible={isModalCancelVisible}
+				onCancel={handleCancelButton}
+				onConfirm={handleCancelButtonConfirm}
+			/>
             
             <View style={styles.btnContainer}>
 				<TouchableOpacity
-                  style={styles.btn}
-                  onPress={() => {
-					cleanFormData();
-					navigation.navigate('ReportScreen')
-				  }}
+					style={styles.btn}
+					onPress={() => {
+						handleCancelButton()
+					}}
                 >
                   <Text style={styles.buttonText}>BATAL</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.btn}
-                  onPress={() => navigation.navigate('ReportFormStep2')}
+                 	style={styles.btn}
+                  	onPress={() => {
+						navigation.navigate('ReportFormStep2')
+					}}
                 >
                   <Text style={styles.buttonText}>KEMBALI</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.btn}
-                  onPress={() => handlePressSubmit()}
+					style={styles.btn}
+					onPress={() => handlePressSubmit()}
                 >
                   <Text style={styles.buttonText}>SIMPAN & KIRIM</Text>
                 </TouchableOpacity>

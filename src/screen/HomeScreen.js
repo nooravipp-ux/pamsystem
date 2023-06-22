@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, FlatList, Image, StyleSheet, SafeAreaView, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import moment from 'moment';
@@ -10,18 +10,18 @@ const HomeScreen = ({ navigation }) => {
 	const { token } = useContext(AuthContext);
 	const [reports, setReports] = useState(null);
 	const [news, setNews] = useState(null);
-	const [ reportRefreshing, setReportRefreshing]  = useState(false);
-	const [ newsRefreshing, setNewsRefreshing]  = useState(false);
 
 	const user = JSON.parse(userInfo);
-
 
 	useEffect(() => {
 		const interval = setInterval(() => {
 			getNews();
 			getReports();
-			console.log('Data User: ', user);
-			}, 10000);	
+		}, 10000);	
+
+		getNews();
+		getReports();
+		
 		return() => {
 			clearInterval(interval);
 		}
@@ -64,88 +64,8 @@ const HomeScreen = ({ navigation }) => {
 		}				
 	}
 
-	const handleNewsRefresh = () => {
-		if (newsRefreshing) return;
-	  
-		setNewsRefreshing(true);
-		getNews();
-	 };
-
-	 const handleReportRefresh = () => {
-		if (reportRefreshing) return;
-
-		setReportRefreshing(true);
-		getReports();
-	 }
-
-	const Item = ({ id, desc, date , hour, image}) => (
-		<View
-			style={styles.newsContainer}
-			// onPress={() => {
-			// 	navigation.navigate('Pelaporan', { 
-			// 		screen: 'ReportDetailScreen',
-			// 		params: { reportId: id } 
-			// 	});
-			// }}
-		>
-			{image !== undefined ? 
-				<Image
-					style={styles.newsImage}
-					source={{ uri: `${BASE_IMG_URL}${image.file}` }}
-				/>
-				:
-				<Image
-					style={styles.newsImage}
-					source={require('../assets/Icons/kamera.png')}
-				/>
-			}
-			<View style={{ flex:3, flexDirection: 'column' }}>
-				<View style={styles.newsDescription}>
-					<Text style={{ flex: 1, color: '#ffffff' }}>{moment(date, 'YYYY-MM-DD').format('DD MMMM YYYY')}</Text>
-						<Text style={{ color: '#ffffff'}}>{hour.substring(0, 5)}</Text>
-					</View>
-					<View style={styles.newsTitle}>
-						<Text style={{ flex: 1, color: '#ffffff', fontWeight: 'bold', textAlign: 'left' }}>{desc.substring(0, 120)} ... </Text>
-					</View>
-			</View>
-		</View>
-	);
-	
-	const NewsItem = ({ id, title, date , hour, image}) => (
-		<View
-			style={styles.newsContainer}
-			// onPress={() => {
-			// 	navigation.navigate('Buletin Berita', { 
-			// 		screen: 'NewsDetailScreen',
-			// 		params: { newsId: id } 
-			// 	});
-			// }}
-		>
-			{image !== undefined ? 
-				<Image
-					style={styles.newsImage}
-					source={{ uri: `${BASE_IMG_URL}${image.file}` }}
-				/>
-				:
-				<Image
-					style={styles.newsImage}
-					source={require('../assets/Icons/kamera.png')}
-				/>
-			}
-			<View style={{ flex:3, flexDirection: 'column' }}>
-				<View style={styles.newsDescription}>
-					<Text style={{ flex: 1, color: '#ffffff' }}>{moment(date, 'YYYY-MM-DD').format('DD MMMM YYYY')}</Text>
-						<Text style={{ color: '#ffffff'}}>Oleh: Admin</Text>
-					</View>
-					<View style={styles.newsTitle}>
-						<Text style={{ flex: 1, color: '#ffffff', fontWeight: 'bold', textAlign: 'left' }}>{title}</Text>
-					</View>
-			</View>
-		</View>
-	);
-
 	return (
-		<View style={styles.container}>
+		<ScrollView style={styles.container}>
 			<View style={{flexDirection: 'row', paddingBottom: 5, borderBottomWidth: 1, borderBottomColor: '#adbcb1',}}>
 				<Image
 					style={{ width: 35, height: 35, marginRight: 5, tintColor: '#ffffff'}}
@@ -187,11 +107,34 @@ const HomeScreen = ({ navigation }) => {
 							<Text style={{ fontSize: 17, color: 'black'  }}>Lihat Semua </Text>
 						</TouchableOpacity>
 					</View>
-					<FlatList
-						data={news}
-						renderItem={({ item }) => <NewsItem id={item.id} title={item.title} date={item.date} hour={item.hour} image={item.photos[0]} />}
-						keyExtractor={item => item.id}
-					/>
+					{
+						news?.map((val, index) => {
+							return (
+								<View style={styles.newsContainer} key={index}>
+									{val.photos[0] !== undefined ? 
+										<Image
+											style={styles.newsImage}
+											source={{ uri: `${BASE_IMG_URL}${val.photos[0].file}` }}
+										/>
+										:
+										<Image
+											style={styles.newsImage}
+											source={require('../assets/Icons/kamera.png')}
+										/>
+									}
+									<View style={{ flex:3, flexDirection: 'column' }}>
+										<View style={styles.newsDescription}>
+											<Text style={{ flex: 1, color: '#ffffff' }}>{moment(val.date, 'YYYY-MM-DD').format('DD MMMM YYYY')}</Text>
+												<Text style={{ color: '#ffffff'}}>Oleh: Admin</Text>
+											</View>
+											<View style={styles.newsTitle}>
+												<Text style={{ flex: 1, color: '#ffffff', fontWeight: 'bold', textAlign: 'left' }}>{val.title}</Text>
+											</View>
+									</View>
+								</View>
+							)
+						})
+					}
 				</SafeAreaView>
 				<SafeAreaView style={styles.newsListContainer}>
 					<View style={{ flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#00826e', padding: 8, borderTopRightRadius: 3, borderTopLeftRadius: 3 }}>
@@ -202,13 +145,49 @@ const HomeScreen = ({ navigation }) => {
 							<Text style={{ fontSize: 17, color: 'black'  }}>Lihat Semua </Text>
 						</TouchableOpacity>
 					</View>
-					<FlatList
-						data={reports}
-						renderItem={({ item }) => <Item id={item.id} desc={item.desc} date={item.date} hour={item.hour} image={item.photos[0]} />}
-						keyExtractor={item => item.id}
-					/>
+					{
+						reports?.map((val, index) => {
+							let imageFound = false;
+							return (
+								<View style={styles.newsContainer} key={index}>
+									{ 
+										val.photos.length !== 0 ? 
+										(val.photos.map((val, index) => {
+											if(!imageFound && val.extension_file !== 'application/pdf'){
+												imageFound = true;
+												return(
+													<Image
+														key={index}
+														style={styles.newsImage}
+														source={{ uri: `${BASE_IMG_URL}${val.file}` }}
+													/>
+												)
+											} else {
+												return null;
+											}
+										})) : 
+										(
+											<Image
+												style={styles.newsImage}
+												source={require('../assets/Icons/kamera.png')}
+											/>
+										)
+									}
+									<View style={{ flex:3, flexDirection: 'column' }}>
+										<View style={styles.newsDescription}>
+											<Text style={{ flex: 1, color: '#ffffff' }}>{moment(val.date, 'YYYY-MM-DD').format('DD MMMM YYYY')}</Text>
+												<Text style={{ color: '#ffffff'}}>{val.hour.substring(0, 5)}</Text>
+											</View>
+											<View style={styles.newsTitle}>
+												<Text style={{ flex: 1, color: '#ffffff', fontWeight: 'bold', textAlign: 'left' }}>{val.desc.substring(0, 120)} ... </Text>
+											</View>
+									</View>
+								</View>
+							)
+						})
+					}
 				</SafeAreaView>
-		</View>
+		</ScrollView>
 	);
 };
 

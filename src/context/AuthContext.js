@@ -51,6 +51,10 @@ export const AuthProvider = ({children}) => {
         }
     }
 
+    const updateProile = async (data) => {
+        await AsyncStorage.setItem('userInfo', JSON.stringify(data));
+    }
+
     useEffect(() => {
         isLoggedIn();
     }, [token]);

@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useContext} from 'react';
-import { View, Text, Image, StyleSheet,ScrollView } from 'react-native';
+import { View, Text, Image, StyleSheet,ScrollView, TouchableOpacity, Alert } from 'react-native';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import { Loading } from '../components/Loading';
 import moment from 'moment';
+import ImageModal from 'react-native-image-modal';
 import { BASE_URL, BASE_IMG_URL } from '../config/Config';
 
-const ReportDetailScreen = ({route}) => {
+const ReportDetailScreen = ({route, navigation}) => {
     const { token } = useContext(AuthContext);
     const [report, setReport] = useState(null);
 
@@ -92,21 +92,43 @@ const ReportDetailScreen = ({route}) => {
                     </Text>
                 </View>
 
-                <View style={{flex: 1, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', marginTop: 10, padding: 5}}>
+                <View style={{flex: 1, marginTop: 25, padding: 5}}>
+					<Text style={{flex: 1, color:'#ffffff', backgroundColor: '#006838', fontSize: 10, fontWeight:'bold', padding: 6}}>LAMPIRAN FOTO</Text>
+					<ScrollView style={{ flexDirection: 'row', padding: 5}} horizontal={true}>
 					{files?.map((val, index) => {
-						return (
-							<>
-								<Image 
+						if(val.extension_file !== "application/pdf"){
+							return (
+								<ImageModal
 									key={index.toString()}
-									style={styles.imgContainer} 
-									source={{ uri: `${BASE_IMG_URL}${val.file}`}} 
-								/>
-							</>							
-						)
+									modalImageResizeMode="contain"
+									style={styles.imgContainer}
+									source={{ uri: `${BASE_IMG_URL}${val.file}`}}
+								/>				
+							)
+						}
 					})}
-
-                    
-                    {/* <Image style={styles.imgContainer} source={require('../assets/Images/banner.jpg')} /> */}
+					</ScrollView>
+                </View>
+				<View style={{flex: 1, marginTop: 15, padding: 5}}>
+					<Text style={{flex: 1, color:'#ffffff', backgroundColor: '#006838', fontSize: 10, fontWeight:'bold', padding: 6}}>LAMPIRAN DOKUMEN</Text>
+					<View style={{ flexDirection: 'column', padding: 5}}>
+					{files?.map((val, index) => {
+						if(val.extension_file === "application/pdf"){
+							return (
+								<TouchableOpacity
+									key={index}
+									onPress={() => {
+										navigation.navigate('PDFViewer', {
+											uri: `${BASE_IMG_URL}${val.file}`
+										})}
+									}
+								>
+									<Text style={{flex: 1, color:'black', fontSize: 10, padding: 6}}>{val.file.substring(val.file.lastIndexOf('/'))} (Klik Untuk Melihat Laporan)</Text>
+								</TouchableOpacity>				
+							)
+						}
+					})}
+					</View>
                 </View>
 			</ScrollView>
 		</View>
@@ -145,10 +167,11 @@ const styles = StyleSheet.create({
 		padding: 8
 	},
 	imgContainer: {
-		width: 330,
-		height: 300,
+		width: 160,
+		height: 160,
+		margin: 3,
 		borderRadius: 2,
-		marginBottom: 5
+		marginTop: 10
 
 	},
 	newsDescription: {

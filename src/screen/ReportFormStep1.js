@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { View, Text, TextInput,StyleSheet, TouchableOpacity, Image, SafeAreaView, FlatList,Pressable, Modal} from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { DataContext  } from '../context/DataContext';
@@ -24,7 +24,7 @@ const ReportFormStep1 = ( {navigation} ) => {
 	const [kec, setKec] = useState(null);
 	const [kel, setKel] = useState(null);
 
-	const { token } = useContext(AuthContext);
+	const { token, userInfo } = useContext(AuthContext);
 	const { formData, updateFormData } = useContext(DataContext);
 
 	const [date, setDate] = useState(new Date());
@@ -37,6 +37,12 @@ const ReportFormStep1 = ( {navigation} ) => {
 	const [showDatePicker, setShowDatePicker] = useState(false);
 
 	const [searchProvText, setSearchProvText] = useState('');
+
+	const user = JSON.parse(userInfo);
+
+	useEffect(() => {
+
+	});
 
 	const onChangeDate = (event, selectedDate) => {
 		const currentDate = new Date(selectedDate) || date;
@@ -108,8 +114,6 @@ const ReportFormStep1 = ( {navigation} ) => {
 
 			if(response){
 				setProv(response.data.response.data);
-				console.log('berhasil fetch data: ', prov)
-
 			}else{
 				console.log('gagal fetch data')
 			}
@@ -133,8 +137,6 @@ const ReportFormStep1 = ( {navigation} ) => {
 
 			if(response){
 				setKab(response.data.response.data);
-				console.log('berhasil fetch data: ', kab)
-
 			}else{
 				console.log('gagal fetch data')
 			}
@@ -158,8 +160,6 @@ const ReportFormStep1 = ( {navigation} ) => {
 
 			if(response){
 				setKec(response.data.response.data);
-				console.log('berhasil fetch data: ', kec)
-
 			}else{
 				console.log('gagal fetch data')
 			}
@@ -182,8 +182,6 @@ const ReportFormStep1 = ( {navigation} ) => {
 
 			if(response){
 				setKel(response.data.response.data);
-				console.log('berhasil fetch data: ', kec)
-
 			}else{
 				console.log('gagal fetch data')
 			}
@@ -460,17 +458,11 @@ const ReportFormStep1 = ( {navigation} ) => {
 							transparent={true}
 							visible={modalProvVisible}
 							onRequestClose={() => {
-								alert('Modal has been closed.');
 								setModalProvVisible(!modalProvVisible);
 							}}>
 							<View style={styles.centeredView}>
 								<View style={styles.modalView}>
-									<TextInput
-										style={styles.searchInput}
-										value={searchProvText}
-										placeholder="Cari Provinsi"
-										onChangeText={ (text) => {setSearchProvText(text)}}
-									/>
+									<Text style={styles.modalText}>Cari Provinsi</Text>
 									<SafeAreaView style={styles.newsListContainer}>
 										<FlatList
 											data={prov}
@@ -491,7 +483,6 @@ const ReportFormStep1 = ( {navigation} ) => {
 							transparent={true}
 							visible={modalKabVisible}
 							onRequestClose={() => {
-								alert('Modal has been closed.');
 								setModalKabVisible(!modalKabVisible);
 							}}>
 							<View style={styles.centeredView}>
@@ -517,7 +508,6 @@ const ReportFormStep1 = ( {navigation} ) => {
 							transparent={true}
 							visible={modalKecVisible}
 							onRequestClose={() => {
-								alert('Modal has been closed.');
 								setModalKecVisible(!modalKecVisible);
 							}}>
 							<View style={styles.centeredView}>
@@ -543,7 +533,6 @@ const ReportFormStep1 = ( {navigation} ) => {
 							transparent={true}
 							visible={modalKelVisible}
 							onRequestClose={() => {
-								alert('Modal has been closed.');
 								setModalKelVisible(!modalKelVisible);
 							}}>
 							<View style={styles.centeredView}>

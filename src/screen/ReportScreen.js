@@ -30,12 +30,10 @@ const ReportScreen = ( {navigation} ) => {
 			});
 
 			const data = response.data.response.data;
-			// console.log('Length from context: ',reports.length);
-			// console.log('Length from Request: ',data.length);
 			if(response){
 				setReports(data);
-				// console.log('berhasil fetch data: ', reports)
-				// console.log('Terjadi Perubahan Data');
+				console.log('berhasil fetch data: ', reports)
+				console.log('Terjadi Perubahan Data');
 				setRefreshing(false);
 
 			}else{
@@ -43,8 +41,6 @@ const ReportScreen = ( {navigation} ) => {
 			}
 		} catch (error) {
 			console.error(error);
-		// } finally {
-		// 	getReports();
 		}
 	}
 
@@ -70,9 +66,10 @@ const ReportScreen = ( {navigation} ) => {
 			}
 		>
 			{image !== undefined ? 
-				<Image
-					style={styles.newsImage}
-					source={{ uri: `${BASE_IMG_URL}${image.file}` }}
+				
+				<Image 
+					style={styles.newsImage} 
+					source={{ uri: `${BASE_IMG_URL}${image.file}`}} 
 				/>
 				:
 				<Image
@@ -103,10 +100,9 @@ const ReportScreen = ( {navigation} ) => {
 			</View>
 			<Text style={styles.welcomeText}>Daftar Pelaporan</Text>
 			<SafeAreaView style={styles.newsListContainer}>
-			{/* <Loading /> */}
 				<FlatList
 					data={reports}
-					renderItem={({ item }) => <Item id={item.id} desc={item.desc} date={item.date} hour={item.hour} image={item.photos[0]} />}
+					renderItem={({ item }) => <Item id={item.id} desc={item.desc} date={item.date} hour={item.hour} image={item.photos.find(val => val.extension_file !== "application/pdf")} />}
 					keyExtractor={item => item.id}
 					refreshControl={
 						<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />

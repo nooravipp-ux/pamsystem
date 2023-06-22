@@ -14,7 +14,6 @@ const LoginScreen = ({ navigation}) => {
     const { setToken, setUserInfo } = useContext(AuthContext);
 
     DeviceInfo.getAndroidId().then((uniqueId) => {
-        console.log(uniqueId);
         setImei(uniqueId);
     });
 
@@ -26,7 +25,7 @@ const LoginScreen = ({ navigation}) => {
         })
         .then(res => {
             let data = res.data;
-            console.log(res.data)
+            // console.log(res.data)
             if(data.status == 200 && data.result == true){
                 setToken(JSON.stringify(res.data.response.token));
                 setUserInfo(JSON.stringify(res.data.response.data));

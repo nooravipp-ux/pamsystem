@@ -10,11 +10,14 @@ import {
 import { BASE_URL } from '../../config/Config';
 import { AuthContext } from '../../context/AuthContext';
 import { launchCamera } from 'react-native-image-picker';
+import Exif from 'react-native-exif';
 import axios from 'axios';
 
 const ProfileScreen = ({navigation}) => {
     const [imageCamera, setImageCamera] = useState(null);
-	const { token } = useContext(AuthContext);
+	const { token, setUserInfo, userInfo } = useContext(AuthContext);
+
+	const user = JSON.parse(userInfo);
 
     const requestCameraPermission = async () => {
 		if (Platform.OS === 'android') {
@@ -45,7 +48,6 @@ const ProfileScreen = ({navigation}) => {
 		if (isCameraPermitted) {
 			launchCamera(options, (response) => {		
 				if (response.didCancel) {
-					alert('User cancelled camera picker');
 					return;
 				} else if (response.errorCode == 'camera_unavailable') {
 					alert('Camera not available on device');
@@ -70,9 +72,23 @@ const ProfileScreen = ({navigation}) => {
 		}
 	};
 
+	const fixImageOrientation = async (imageUri) => {
+		try {
+			const exifData = await Exif.getExif(imageUri);
+			const orientation = exifData.orientation;
+			const fixedImageUri = await Exif.rotate(imageUri, orientation);
+
+			return fixedImageUri;
+		} catch(error) {
+			console.log('Error', error)
+			return imageUri;
+		}
+	}
+
 	const updateProfile = async () => {
 		let payload = new FormData();
 
+		// console.log("Image After fixed: ", fixImageOrientation(imageCamera.uri));
 		payload.append("file", {
 			uri: imageCamera.uri,
 			type: imageCamera.type,
@@ -88,7 +104,8 @@ const ProfileScreen = ({navigation}) => {
 				},
 			});
 
-			console.log(response.data);
+			console.log(response.data.response);
+			setUserInfo(JSON.stringify(response.data.response));
 			navigation.navigate('Dashboard');
 			setImageCamera(null);
 		} catch (error) {
@@ -169,7 +186,7 @@ const styles = StyleSheet.create({
 	buttonSimpan: {
 		backgroundColor: '#00cea6',
 		justifyContent: 'center',
-		paddingHorizontal: 70,
+		paddingHorizontal: 65,
 		borderRadius: 2,
 		marginTop: 10,
 		height: 50,
