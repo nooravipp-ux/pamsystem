@@ -32,8 +32,6 @@ const ReportScreen = ( {navigation} ) => {
 			const data = response.data.response.data;
 			if(response){
 				setReports(data);
-				console.log('berhasil fetch data: ', reports)
-				console.log('Terjadi Perubahan Data');
 				setRefreshing(false);
 
 			}else{
@@ -45,8 +43,6 @@ const ReportScreen = ( {navigation} ) => {
 	}
 
 	const handleRefresh = () => {
-
-		console.log('Refresh triggred !!')
 		if (refreshing) return;
 	  
 		setRefreshing(true);

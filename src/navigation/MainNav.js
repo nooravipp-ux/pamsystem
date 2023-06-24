@@ -104,7 +104,7 @@ function MainNav({navigation}) {
                 imageFiles.forEach(imageFile => {
                     images.push({
                         uri: 'file://' + imageFile.path,
-                        type: 'jpg',
+                        type: 'image/jpg',
                         name: imageFile.name,
                     })
                 });

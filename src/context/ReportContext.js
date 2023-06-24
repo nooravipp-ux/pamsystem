@@ -28,7 +28,7 @@ export const ReportProvider = ({children}) => {
     }
 
     useEffect(() => {
-        console.log('Report Context Triggered !!!')
+        
     }, [reports]);
 
     return (
