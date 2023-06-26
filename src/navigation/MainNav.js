@@ -29,21 +29,6 @@ function MainNav({navigation}) {
 		return () => clearInterval(interval);
 	}, []);
 
-
-    const granted = await request(
-        Platform.select({
-          android: PERMISSIONS.ANDROID.ACCESS_COARSE_LOCATION,
-          ios: PERMISSIONS.IOS.LOCATION_WHEN_IN_USE,
-        }),
-        {
-          title: 'PAMSYSTEM',
-          message: 'Aplikasi ini memerlukan akses lokasi anda',
-        },
-      );
-    
-      return granted === RESULTS.GRANTED;
-    }
-
     const getGeolocation =  async () => {
             try {
                 const granted = await PermissionsAndroid.request(
