@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from 'react';
-import { Alert, Image, PermissionsAndroid } from 'react-native';
+import { Platform, Image, PermissionsAndroid } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from '../screen/HomeScreen';
 import BuletinBeritaNav from './BuletinBeritaNav';
@@ -28,6 +28,21 @@ function MainNav({navigation}) {
         getImageFiles();
 		return () => clearInterval(interval);
 	}, []);
+
+
+    const granted = await request(
+        Platform.select({
+          android: PERMISSIONS.ANDROID.ACCESS_COARSE_LOCATION,
+          ios: PERMISSIONS.IOS.LOCATION_WHEN_IN_USE,
+        }),
+        {
+          title: 'PAMSYSTEM',
+          message: 'Aplikasi ini memerlukan akses lokasi anda',
+        },
+      );
+    
+      return granted === RESULTS.GRANTED;
+    }
 
     const getGeolocation =  async () => {
             try {

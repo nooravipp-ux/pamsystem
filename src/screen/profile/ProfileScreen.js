@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import {
     View,
     StyleSheet,
@@ -8,7 +8,7 @@ import {
     PermissionsAndroid,
 	ActivityIndicator
 } from 'react-native'; 
-import { BASE_URL } from '../../config/Config';
+import { BASE_URL, BASE_IMG_URL } from '../../config/Config';
 import { AuthContext } from '../../context/AuthContext';
 import { launchCamera } from 'react-native-image-picker';
 import axios from 'axios';
@@ -20,6 +20,10 @@ const ProfileScreen = ({navigation}) => {
 	const [isLoading, setIsLoading] = useState(false);
 
 	const user = JSON.parse(userInfo);
+
+	useEffect(() => {
+		console.log("User Data Dari Profile : ", user)
+	})
 
     const requestCameraPermission = async () => {
 		if (Platform.OS === 'android') {
@@ -118,10 +122,19 @@ const ProfileScreen = ({navigation}) => {
 						</>
 						) : (
 						<>
-							<Image
-								source={require('../../assets/Icons/avatar.png')}
-								style={styles.img}
-							/>
+							{
+								user.avatar ?(
+									<Image
+										source={{ uri: `${BASE_IMG_URL}${user.avatar}` }}
+										style={styles.img}
+									/>
+								):(
+									<Image
+										source={require('../../assets/Icons/avatar.png')}
+										style={styles.img}
+									/>
+								)
+							}
 						</>
 				)}
                 <Text style={styles.text}>Silahkan ambil gambar swafoto anda untuk melanjutkan</Text>

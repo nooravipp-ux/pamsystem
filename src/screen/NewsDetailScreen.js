@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useContext} from 'react';
-import { View, Text, Image, StyleSheet, SafeAreaView, useWindowDimensions, ScrollView } from 'react-native';
-import RenderHtml from 'react-native-render-html';
+import { View, Text, Image, StyleSheet, ScrollView } from 'react-native';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import { Loading } from '../components/Loading';
 import moment from 'moment';
 import { BASE_URL, BASE_IMG_URL } from '../config/Config';
 

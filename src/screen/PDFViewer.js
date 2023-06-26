@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Dimensions, View , Image, Text} from 'react-native';
+import { StyleSheet, View , Image, Text} from 'react-native';
 import Pdf from 'react-native-pdf';
 
 

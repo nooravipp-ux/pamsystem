@@ -36,13 +36,11 @@ const ReportFormStep1 = ( {navigation} ) => {
 	const [showTimePicker, setShowTimePicker] = useState(false);
 	const [showDatePicker, setShowDatePicker] = useState(false);
 
-	const [searchProvText, setSearchProvText] = useState('');
-
 	const user = JSON.parse(userInfo);
 
 	useEffect(() => {
-
-	});
+		autoFill();
+	}, []);
 
 	const onChangeDate = (event, selectedDate) => {
 		const currentDate = new Date(selectedDate) || date;
@@ -83,16 +81,34 @@ const ReportFormStep1 = ( {navigation} ) => {
 	const handleInputProvince = (value, text) => {
 		updateFormData({ province_id: value });
 		setProvText(text);
+
+		updateFormData({ regency_id: '' });
+		setKabText('');
+
+		updateFormData({ district_id: '' });
+		setKecText('');
+
+		updateFormData({ village_id: '' });
+		setKelText('');
 	};
 
 	const handleInputRegency = (value, text) => {
 		updateFormData({ regency_id: value });
 		setKabText(text);
+
+		updateFormData({ district_id: '' });
+		setKecText('');
+
+		updateFormData({ village_id: '' });
+		setKelText('');
 	};
 
 	const handleInputDistrict = (value, text) => {
 		updateFormData({ district_id: value });
 		setKecText(text);
+
+		updateFormData({ village_id: '' });
+		setKelText('');
 	};
 
 	const handleInputVillage = (value, text) => {
@@ -283,10 +299,17 @@ const ReportFormStep1 = ( {navigation} ) => {
 		}
 	}
 
-	// Filter funtion
-	const filterDataProv = (prov) => {
-		return prov.filter(item => item.toLowerCase().includes(searchProvText.toLowerCase()));
-	};
+	//  Autofill tempat
+	const autoFill = () => {
+		setProvText(user.province_name)
+		updateFormData({ province_id: user.province_id });
+		setKabText(user.regency_name)
+		updateFormData({ regency_id: user.regency_id });
+		setKecText(user.district_name)
+		updateFormData({ district_id: user.district_id });
+		setKelText(user.village_name)
+		updateFormData({ village_id: user.village_id });
+	}
 
     return(
         <View style={styles.container}>
