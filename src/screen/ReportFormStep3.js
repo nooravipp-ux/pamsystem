@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
-  PermissionsAndroid,
   Modal,
   SafeAreaView,
   ScrollView
@@ -16,6 +15,7 @@ import { DataContext  } from '../context/DataContext';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import Geolocation from '@react-native-community/geolocation';
 import DocumentPicker from 'react-native-document-picker';
+import {PERMISSIONS, RESULTS, check} from 'react-native-permissions';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { BASE_URL } from '../config/Config';
@@ -58,78 +58,49 @@ function ReportFormStep3({ navigation }) {
 		updateFormData({ kodam_id: "" });
 	}
 
-	const requestCameraPermission = async () => {
-		if (Platform.OS === 'android') {
-			try {
-				const granted = await PermissionsAndroid.request(
-					PermissionsAndroid.PERMISSIONS.CAMERA, 
-					{
-						title: 'Camera Permission',
-						message: 'App needs camera permission',
-					},
-				);
-				return granted === PermissionsAndroid.RESULTS.GRANTED;
-			} catch (err) {
-				console.warn(err)
-				return false;
-			}
-		} else return true;
-	}
-
-	const requestExternalWritePermission = async () => {
-		if (Platform.OS === 'android') {
-			try {
-				const granted = await PermissionsAndroid.request(
-					PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-				{
-					title: 'External Storage Write Permission',
-					message: 'App needs write permission',
-				},
-				);
-				// If WRITE_EXTERNAL_STORAGE Permission is granted
-				return granted === PermissionsAndroid.RESULTS.GRANTED;
-			} catch (err) {
-				console.warn(err);
-				alert('Write permission err', err);
-			}
-			return false;
-			} else return true;
-	  };
-	
 	const captureImage = async () => {
-		let options = {
-			mediaType: 'photo', 
-			quality: 0.5,
-			includeExtra: true,
-			cameraType: 'back',
-		};
-		
-		let isCameraPermitted = await requestCameraPermission();
+		try {
+			check(Platform.OS === 'android' ? PERMISSIONS.ANDROID.CAMERA : PERMISSIONS.IOS.CAMERA)
+            .then((result) => {
+                if(result === RESULTS.GRANTED) {
+                    let options = {
+						mediaType: 'photo', 
+						quality: 0.5,
+						includeExtra: true,
+						cameraType: 'back',
+					};
 
-		if (isCameraPermitted) {
-			launchCamera(options, (response) => {
-				// console.log('Response = ', response);
-				if (response.didCancel) {
-					return;
-				} else if (response.errorCode == 'camera_unavailable') {
-					alert('Camera not available on device');
-					return;
-				} else if (response.errorCode == 'permission') {
-					alert('Permission not satisfied');
-					return;
-				} else if (response.errorCode == 'others') {
-					alert(response.errorMessage);
-				    return;
-				} else {
-					const data = response.assets;
-					if(data[0].fileSize < 2000000){
-						setImageCamera((prevSelectedImages) => prevSelectedImages.concat(data));
-					}else{
-						// setImageCamera(null);
-						alert('Foto / Gambar harus kurang atau sama dengan 2 MB !')
-					}
-				}
-			});
+					launchCamera(options, (response) => {		
+						if (response.didCancel) {
+							return;
+						} else if (response.errorCode == 'camera_unavailable') {
+							alert('Camera not available on device');
+							return;
+						} else if (response.errorCode == 'permission') {
+							alert('Permission not satisfied');
+							return;
+						} else if (response.errorCode == 'others') {
+							alert(response.errorMessage);
+							return;
+						} else {
+							const data = response.assets;
+							if(data[0].fileSize < 2000000){
+								setImageCamera((prevSelectedImages) => prevSelectedImages.concat(data));
+							}else{
+								// setImageCamera(null);
+								alert('Foto / Gambar harus kurang atau sama dengan 2 MB !')
+							}
+						}
+					});
+                } else {
+                    console.log('Permission Denied')
+                }
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+		}catch(error) {
+
 		}
 	};	
 
@@ -155,26 +126,23 @@ function ReportFormStep3({ navigation }) {
 				return;
 			} else {
 				const data = response.assets;
-					if(data[0].fileSize < 2000000){
-						setImageCamera((prevSelectedImages) => prevSelectedImages.concat(data));
-					}else{
-						// setImageCamera(null);
-						alert('Foto / Gambar harus kurang atau sama dengan 2 MB !')
-					}
+				if(data[0].fileSize < 2000000){
+					setImageCamera((prevSelectedImages) => prevSelectedImages.concat(data));
+				}else{
+					// setImageCamera(null);
+					alert('Foto / Gambar harus kurang atau sama dengan 2 MB !')
+				}
 			}
 		});
 	}
 
 	const  pickDocument = async () => {
-		let isDocumentPermitted = await requestExternalWritePermission();
 		try {
 			const res = await DocumentPicker.pick({
 				type: [DocumentPicker.types.pdf],
 				allowMultiSelection: true,
 			})
 			setFiles((prevSelectedFile) => prevSelectedFile.concat(res));
-
-			// console.log(files)
 		} catch(error) {
 			console.log(error)
 		}
@@ -218,19 +186,20 @@ function ReportFormStep3({ navigation }) {
 
 	const getGeolocation =  async () => {
 		try {
-			const granted = await PermissionsAndroid.request(
-				PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-			);
-
-			if(granted === PermissionsAndroid.RESULTS.GRANTED) {
-				Geolocation.getCurrentPosition( info => {
-					setLat(info.coords.latitude);
-					setLong(info.coords.longitude);
+			check(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION)
+				.then((result) => {
+					if(result === RESULTS.GRANTED) {
+						Geolocation.getCurrentPosition( info => {
+							setLat(info.coords.latitude);
+							setLong(info.coords.longitude);
+						});
+					} else {
+						console.log('Permission Denied')
+					}
+				})
+				.catch((error) => {
+					console.log(error);
 				});
-			} else {
-				console.log('Permissiion di tolak');
-			}
-
 		} catch (error) {
 			console.log(error);
 		}

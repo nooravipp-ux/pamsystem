@@ -4,7 +4,6 @@ import MainNav from './MainNav';
 import LoginScreen from '../screen/LoginScreen';
 import SplashScreen from '../screen/SplashScreen';
 import { AuthContext } from '../context/AuthContext';
-import ProfileScreen from '../screen/profile/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
 

