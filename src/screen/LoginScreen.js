@@ -1,5 +1,5 @@
 import React, { useState, useContext }  from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, ImageBackground, ActivityIndicator} from 'react-native';
+import { View, TextInput, TouchableOpacity, Text, StyleSheet, ImageBackground, ActivityIndicator, Image} from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
@@ -43,8 +43,9 @@ const LoginScreen = ({ navigation}) => {
 	};
 
     return(
-        <ImageBackground source={ require('../assets/Images/camouflage-optional.png') } style={ styles.imgBackground }>
+        <ImageBackground source={ require('../assets/Images/camouflage.png') } style={ styles.imgBackground }>
             <View style={styles.container}>
+                <Image style={styles.logo} source={ require('../assets/Images/icon-logo.png') }/>
                 <TextInput
                     style={styles.input}
                     placeholder='Username'
@@ -79,7 +80,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
-        marginTop: 400,
         padding: 40,
     },
     imgBackground: {
@@ -114,6 +114,12 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: '#ffffff',
         fontWeight: '700',
+    },
+    logo: {
+        position: 'relative',
+        width: 270,
+        height: 90,
+        marginBottom: 30
     }
 });
 
