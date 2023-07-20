@@ -13,6 +13,10 @@ const ReportFormStep2 = ( {navigation} ) => {
 		updateFormData({ keterangan: value });
 	};
 
+	const handleInputNilai = (value) => {
+		updateFormData({ nilai: value });
+	};
+
 	const validateForm = () => {
 		if(formData.desc === ""){
 			alert("Data Uraian Kejadian tidak boleh kosong !");
@@ -50,6 +54,13 @@ const ReportFormStep2 = ( {navigation} ) => {
 					multiline={true}
 					numberOfLines={4}
 				/>
+				{/* <Text style={styles.inputLabel}>NILAI</Text>
+				<TextInput
+					style={styles.input}
+					value={formData.nilai}
+					keyboardType='numeric'
+					onChangeText={handleInputNilai}
+				/> */}
 			</ScrollView>
 			<View style={styles.buttonContainer}>
 				<TouchableOpacity

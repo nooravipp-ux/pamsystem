@@ -18,7 +18,7 @@ const HomeScreen = ({ navigation }) => {
 			getNews();
 			getReports();
 		}, 10000);	
-
+		console.log(user);
 		getNews();
 		getReports();
 		
@@ -111,10 +111,10 @@ const HomeScreen = ({ navigation }) => {
 						news?.map((val, index) => {
 							return (
 								<View style={styles.newsContainer} key={index}>
-									{val.photos[0] !== undefined ? 
+									{val.thumbnail !== null ? 
 										<Image
 											style={styles.newsImage}
-											source={{ uri: `${BASE_IMG_URL}${val.photos[0].file}` }}
+											source={{ uri: `${BASE_IMG_URL}/${val.thumbnail}` }}
 										/>
 										:
 										<Image

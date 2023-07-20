@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useContext} from 'react';
-import { View, Text, Image, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import moment from 'moment';
+import RenderHtml from 'react-native-render-html';
 import { BASE_URL, BASE_IMG_URL } from '../config/Config';
-
 
 const NewsDetailScreen = ({route}) => {
 	const { token } = useContext(AuthContext);
@@ -14,13 +14,15 @@ const NewsDetailScreen = ({route}) => {
     const [hour, setHour] = useState('');
 	const [title, setTitle] = useState('');
     const [desc, setDesc] = useState('');
-	const [files, setFiles] = useState([]);
+	const [thumbnail, setThumbnail] = useState('');
+
+	const { width } = useWindowDimensions();
+	const source = {
+		html: `${desc}`
+	};
 
 	useEffect(() => {
         const { newsId } = route.params;
-
-        console.log('Report Id :', newsId);
-
 		const getNewsById = async () => {
 			try {
 				const response = await axios.get(`${BASE_URL}/news/${newsId}`, {
@@ -30,14 +32,14 @@ const NewsDetailScreen = ({route}) => {
 				});
 
 				const data = response.data.response;
-                console.log(data.photos);
+                console.log(data);
 				if(response){
 					setNews(response.data.response);
                     setDate(data.date);
                     setHour(data.hour);
                     setDesc(data.desc);
                     setTitle(data.title);
-					setFiles(data.photos)
+					setThumbnail(data.thumbnail)
 				}else{
 					console.log('gagal fetch data')
 				}
@@ -68,18 +70,16 @@ const NewsDetailScreen = ({route}) => {
                     <Text style={{flex: 1, color:'#ffffff', fontSize: 25, textAlign: 'justify', fontWeight:'bold', padding: 6}}>{title}</Text>
                 </View>
 				<View style={{flex: 1, flexDirection: 'row', marginTop: 10, padding: 6}}>
-					{files?.map((val, index) => {
-						return (
-								<Image 
-									key={index.toString()}
-									style={styles.imgContainer} 
-									source={{ uri: `${BASE_IMG_URL}${val.file}`}} 
-								/>						
-						)
-					})}
+					<Image 
+						style={styles.imgContainer} 
+						source={{ uri: `${BASE_IMG_URL}/${thumbnail}`}} 
+					/>
                 </View>
 				<View style={{flex: 1, flexDirection: 'row', marginTop: 5, padding: 5}}>
-                    <Text style={{flex: 1, color:'#ffffff', fontSize: 16, textAlign: 'justify', padding: 6}}>{desc}</Text>
+					<RenderHtml
+						contentWidth={width}
+						source={source}
+					/>
                 </View>
 			</ScrollView>
 		</View>
@@ -118,9 +118,9 @@ const styles = StyleSheet.create({
 		padding: 8
 	},
 	imgContainer: {
-		width: 330,
+		width: '100%',
 		height: 300,
-		borderRadius: 2,
+		borderRadius: 5,
 		marginBottom: 5
 
 	},

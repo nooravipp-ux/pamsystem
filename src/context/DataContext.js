@@ -13,6 +13,7 @@ export const DataProvider = ({ children }) => {
         village_id: '',
         desc: '',
         keterangan: '',
+        nilai: '0',
         regarding_id: '1',
         kodam_id: '',
         user_id: '',

@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, useState } from 'react';
-import { View, Text, FlatList, Image, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, FlatList, Image, StyleSheet, SafeAreaView, TouchableOpacity, RefreshControl } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import moment from 'moment';
@@ -16,6 +16,8 @@ const NewsScreen = ( {navigation} ) => {
 			handleRefresh();
 		}, 20000);	
 		getNews();
+
+		console.log(news)
 		return() => {
 			clearInterval(interval);
 		}
@@ -30,12 +32,8 @@ const NewsScreen = ( {navigation} ) => {
 			});
 
 			const data = response.data.response.data;
-			// console.log('Length from context: ',reports.length);
-			// console.log('Length from Request: ',data.length);
 			if(response){
 				setNews(data);
-				// console.log('berhasil fetch data: ', reports)
-				// console.log('Terjadi Perubahan Data');
 				setRefreshing(false);
 
 			}else{
@@ -64,10 +62,10 @@ const NewsScreen = ( {navigation} ) => {
 				newsId: id
 			})}
 		>
-			{image !== undefined ? 
+			{image !== null ? 
 				<Image
 					style={styles.newsImage}
-					source={{ uri: `${BASE_IMG_URL}${image.file}` }}
+					source={{ uri: `${BASE_IMG_URL}/${image}` }}
 				/>
 				:
 				<Image
@@ -100,7 +98,7 @@ const NewsScreen = ( {navigation} ) => {
 			<SafeAreaView style={styles.newsListContainer}>
 				<FlatList
 					data={news}
-					renderItem={({ item }) => <Item id={item.id} title={item.title} date={item.date} hour={item.hour} image={item.photos[0]} />}
+					renderItem={({ item }) => <Item id={item.id} title={item.title} date={item.date} hour={item.hour} image={item.thumbnail} />}
 					keyExtractor={item => item.id}
 					refreshControl={
 						<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />

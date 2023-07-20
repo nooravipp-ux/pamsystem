@@ -9,6 +9,7 @@ const LoginScreen = ({ navigation}) => {
 
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [imei, setImei] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -42,6 +43,10 @@ const LoginScreen = ({ navigation}) => {
         })
 	};
 
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+    };
+
     return(
         <ImageBackground source={ require('../assets/Images/camouflage.png') } style={ styles.imgBackground }>
             <View style={styles.container}>
@@ -50,6 +55,7 @@ const LoginScreen = ({ navigation}) => {
                     style={styles.input}
                     placeholder='Username'
                     placeholderTextColor='white'
+                    autoCapitalize='none'
                     onChangeText={ (text) => setUsername(text)}
                     value={username}
                 />
@@ -57,10 +63,14 @@ const LoginScreen = ({ navigation}) => {
                     style={styles.input}
                     placeholder='Password'
                     placeholderTextColor='white'
-                    secureTextEntry={true}
+                    autoCapitalize='none'
+                    secureTextEntry={!showPassword}
                     onChangeText={ (text) => setPassword(text)}
                     value={password}
                 />
+                <TouchableOpacity onPress={togglePasswordVisibility}>
+                    <Text>{showPassword ? 'Hide Password' : 'Show Password'}</Text>
+                </TouchableOpacity>
                 <TouchableOpacity 
                     style={styles.buttonContainer} 
                     // onPress={() => login(username, password, imei)}
