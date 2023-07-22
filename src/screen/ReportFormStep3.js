@@ -248,7 +248,7 @@ function ReportFormStep3({ navigation }) {
 				uploadData.append("file[]", val);
 			})
 
-            console.log(uploadData);
+            console.log('FormData : '+uploadData);
 
 			const response = await axios.post(`${BASE_URL}/reports/insert`, uploadData, {
 				headers: {
